@@ -1467,7 +1467,7 @@ const getInitials = (name: string) => {
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-teal-600 hover:bg-gray-50">Accueil</Link>
-              <Link href="/campagnes" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Annonces</Link>
+              <Link href="/annonces" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Annonces</Link>
               <Link href="/articles" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Articles</Link>
               <Link href="/conseils" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Conseils</Link>
               <Link href="/hopitals" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Hopitaux</Link>
