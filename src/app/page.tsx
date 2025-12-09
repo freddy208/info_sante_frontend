@@ -128,12 +128,12 @@ const nextStep = () => {
   if (currentStep < steps.length - 1) {
     setCurrentStep(currentStep + 1);
   } else {
-    alert('Redirection vers /auth/inscription');
+    router.push("/auth/inscription");
   }
 };
 
 const skipOnboarding = () => {
-  alert('Redirection vers /accueil');
+  router.push("/accueil");
 };
 
 
