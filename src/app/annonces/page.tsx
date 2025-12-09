@@ -640,7 +640,7 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
 
 // Ajoutez cette fonction pour gérer le clic sur une annonce
 const handleViewDetails = () => {
-  router.push(`/annonces/details/`);
+  router.push(`/annonces/details/${announcement.id || announcement.slug}`);
 };
   
   // Fonction pour formater la date (corrigée)
@@ -740,23 +740,23 @@ const getCategoryColor = (categoryName: string) => {
   };
   
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
     >
       <div className="relative">
         <img
-          src={getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 200, crop: 'fill' })}
+          src={getCloudinaryImageUrl(announcement.featuredImage, { width: 600, height: 300, crop: 'fill' })}
           alt={announcement.title}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 sm:h-56 object-cover"
         />
         
         {/* Badge de catégorie */}
         <div className="absolute top-3 left-3">
-          <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-md`}>
+          <span className={`inline-flex items-center px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-lg`}>
             {getCategoryIcon(announcement.category?.name || '')} {announcement.category?.name}
           </span>
         </div>
@@ -764,8 +764,8 @@ const getCategoryColor = (categoryName: string) => {
         {/* Badge spécial si l'annonce est épinglée */}
         {announcement.isPinned && (
           <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white shadow-md">
-              <Star className="h-3 w-3 mr-1" /> Épinglé
+            <span className="inline-flex items-center px-2.5 py-1.5 text-xs sm:text-sm font-medium rounded-full bg-amber-500 text-white shadow-lg">
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> Épinglé
             </span>
           </div>
         )}
@@ -774,90 +774,95 @@ const getCategoryColor = (categoryName: string) => {
         <div className="absolute bottom-3 right-3 flex space-x-2">
           <button
             onClick={() => setIsBookmarked(!isBookmarked)}
-            className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors"
+            className="p-2 sm:p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+            aria-label={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
-            <Bookmark className={`h-4 w-4 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-600'}`} />
+            <Bookmark className={`h-4 w-4 sm:h-5 sm:w-5 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-600'}`} />
           </button>
           <button
             onClick={handleShare}
-            className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors"
+            className="p-2 sm:p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+            aria-label="Partager l'annonce"
           >
-            <Share2 className="h-4 w-4 text-gray-600" />
+            <Share2 className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
           </button>
         </div>
       </div>
       
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-gray-900 text-lg line-clamp-2">{announcement.title}</h3>
+      <div className="p-4 sm:p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-semibold text-gray-900 text-lg sm:text-xl line-clamp-2 flex-1 pr-2">{announcement.title}</h3>
         </div>
         
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{announcement.excerpt}</p>
+        <p className="text-gray-600 text-sm sm:text-base mb-4 line-clamp-2">{announcement.excerpt}</p>
         
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <div className="flex items-center mr-4">
-            <MapPin className="h-4 w-4 mr-1 text-teal-600" />
-            {announcement.location?.city}
+        <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600 mb-3 gap-x-4 gap-y-2">
+          <div className="flex items-center">
+            <MapPin className="h-4 w-4 mr-1.5 text-teal-600" />
+            <span className="truncate max-w-[150px] sm:max-w-none">{announcement.location?.city}</span>
           </div>
           <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-1 text-teal-600" />
-            {formatDate(announcement.startDate)}
+            <Calendar className="h-4 w-4 mr-1.5 text-teal-600" />
+            <span className="text-xs sm:text-sm">{formatDate(announcement.startDate)}</span>
           </div>
         </div>
         
-        <div className="flex items-center text-sm text-gray-600 mb-3">
-          <Users className="h-4 w-4 mr-1 text-teal-600" />
-          {announcement.organization?.name}
+        <div className="flex items-center text-sm sm:text-base text-gray-600 mb-4">
+          <Users className="h-4 w-4 mr-1.5 text-teal-600" />
+          <span className="truncate">{announcement.organization?.name}</span>
         </div>
         
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-teal-600">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm sm:text-base font-medium text-teal-600">
             {announcement.isFree ? 'Gratuit' : `${announcement.cost} XAF`}
           </span>
-          <div className="flex items-center space-x-3 text-sm text-gray-500">
+          <div className="flex items-center space-x-2 sm:space-x-3 text-sm sm:text-base text-gray-500">
             <div className="flex items-center">
               <Eye className="h-4 w-4 mr-1" />
-              {announcement.viewsCount}
+              <span className="text-xs sm:text-sm">{announcement.viewsCount}</span>
             </div>
             <div className="flex items-center">
               <MessageCircle className="h-4 w-4 mr-1" />
-              {announcement.commentsCount}
+              <span className="text-xs sm:text-sm">{announcement.commentsCount}</span>
             </div>
             <div className="flex items-center">
               <Heart className="h-4 w-4 mr-1" />
-              {announcement.reactionsCount}
+              <span className="text-xs sm:text-sm">{announcement.reactionsCount}</span>
             </div>
           </div>
         </div>
         
         {announcement.capacity && (
-          <div className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-1.5">
               <span className="text-gray-600">{announcement.registeredCount} inscrits</span>
               <span className="text-gray-600">{announcement.capacity - announcement.registeredCount} places restantes</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
               <div
-                className={`h-2.5 rounded-full ${
+                className={`h-2.5 sm:h-3 rounded-full ${
                   fillPercentage > 80 ? 'bg-red-500' : fillPercentage > 50 ? 'bg-amber-500' : 'bg-teal-600'
                 }`}
                 style={{ width: `${fillPercentage}%` }}
               ></div>
             </div>
-            <div className="text-right text-xs text-gray-500 mt-1">{fillPercentage}% complet</div>
+            <div className="text-right text-xs sm:text-sm text-gray-500 mt-1">{fillPercentage}% complet</div>
           </div>
         )}
         
-        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-gray-100">
           <button
-            onClick={handleViewDetails}
-            className="text-teal-600 text-sm font-medium flex items-center hover:text-teal-700 transition-colors"
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-teal-600 text-sm sm:text-base font-medium flex items-center hover:text-teal-700 transition-colors"
           >
             {showDetails ? 'Moins de détails' : 'Plus de détails'}
             <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
           </button>
           
-          <button className="px-4 py-1.5 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors">
+          <button 
+            onClick={handleViewDetails}
+            className="w-full sm:w-auto px-4 sm:px-5 py-2 bg-teal-600 text-white text-sm sm:text-base font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg"
+          >
             S&apos;inscrire
           </button>
         </div>
@@ -870,33 +875,36 @@ const getCategoryColor = (categoryName: string) => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-3 pt-3 border-t border-gray-100"
+              className="mt-4 pt-4 border-t border-gray-100"
             >
-              <div className="flex items-center text-sm text-gray-600 mb-2">
-                <Clock className="h-4 w-4 mr-2 text-teal-600" />
-                {formatTime(announcement.startDate)} - {formatTime(announcement.endDate)}
+              <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600 mb-2 gap-x-4 gap-y-2">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-teal-600" />
+                  {formatTime(announcement.startDate)} - {formatTime(announcement.endDate)}
+                </div>
               </div>
               
-              <div className="flex items-center text-sm text-gray-600 mb-2">
+              <div className="flex items-center text-sm sm:text-base text-gray-600 mb-2">
                 <MapPin className="h-4 w-4 mr-2 text-teal-600" />
                 {announcement.location?.address}
               </div>
               
-              <div className="flex items-center text-sm text-gray-600">
-                <Users className="h-4 w-4 mr-2 text-teal-600" />
-                Public ciblé: {announcement.targetAudience?.join(', ')}
+              <div className="flex items-start text-sm sm:text-base text-gray-600">
+                <Users className="h-4 w-4 mr-2 mt-0.5 text-teal-600 shrink-0" />
+                <span>Public ciblé: {announcement.targetAudience?.join(', ')}</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
 // Composant pour la carte d'annonce en vue grille (amélioré)
 function AnnouncementGridCard({ announcement }: { announcement: Announcement }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const router = useRouter();
   
   const formatDate = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
@@ -904,6 +912,10 @@ function AnnouncementGridCard({ announcement }: { announcement: Announcement }) 
       day: 'numeric', 
       month: 'short' 
     });
+  };
+
+  const handleViewDetails = () => {
+    router.push(`/annonces/details/${announcement.id || announcement.slug}`);
   };
   
 const getCategoryIcon = (category: Category | string) => {
@@ -962,24 +974,24 @@ const getCategoryColor = (categoryName: string) => {
   const fillPercentage = announcement.capacity ? Math.round((announcement.registeredCount / announcement.capacity) * 100) : 0;
   
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
       whileHover={{ y: -5 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
     >
       <div className="relative">
         <img
-          src={getCloudinaryImageUrl(announcement.featuredImage, { width: 300, height: 200, crop: 'fill' })}
+          src={getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 250, crop: 'fill' })}
           alt={announcement.title}
-          className="w-full h-48 object-cover"
+          className="w-full h-40 sm:h-48 object-cover"
         />
         
         {/* Badge de catégorie */}
         <div className="absolute top-2 left-2">
-          <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-md`}>
+          <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-lg`}>
             {getCategoryIcon(announcement.category?.name || '')} {announcement.category?.name}
           </span>
         </div>
@@ -987,7 +999,7 @@ const getCategoryColor = (categoryName: string) => {
         {/* Badge spécial si l'annonce est épinglée */}
         {announcement.isPinned && (
           <div className="absolute top-2 right-2">
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white shadow-md">
+            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white shadow-lg">
               <Star className="h-3 w-3 mr-1" />
             </span>
           </div>
@@ -997,23 +1009,24 @@ const getCategoryColor = (categoryName: string) => {
         <div className="absolute bottom-2 right-2">
           <button
             onClick={() => setIsBookmarked(!isBookmarked)}
-            className="p-1.5 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors"
+            className="p-1.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+            aria-label={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
             <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-600'}`} />
           </button>
         </div>
       </div>
       
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{announcement.title}</h3>
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">{announcement.title}</h3>
         
         <div className="flex items-center text-sm text-gray-600 mb-2">
-          <MapPin className="h-3.5 w-3.5 mr-1 text-teal-600" />
-          {announcement.location?.city}
+          <MapPin className="h-3.5 w-3.5 mr-1.5 text-teal-600" />
+          <span className="truncate">{announcement.location?.city}</span>
         </div>
         
         <div className="flex items-center text-sm text-gray-600 mb-2">
-          <Calendar className="h-3.5 w-3.5 mr-1 text-teal-600" />
+          <Calendar className="h-3.5 w-3.5 mr-1.5 text-teal-600" />
           {formatDate(announcement.startDate)}
         </div>
         
@@ -1041,11 +1054,14 @@ const getCategoryColor = (categoryName: string) => {
           </div>
         )}
         
-        <button className="w-full px-3 py-1.5 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors">
+        <button 
+          onClick={handleViewDetails}
+          className="w-full px-3 py-2 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg"
+        >
           Voir les détails
         </button>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
@@ -1074,7 +1090,7 @@ function FiltersBar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-center justify-between py-3 gap-3">
           {/* Barre de recherche avec suggestions */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-md w-full">
             <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${isSearchFocused ? 'text-teal-600' : 'text-gray-400'}`}>
               <Search className="h-5 w-5" />
             </div>
@@ -1086,8 +1102,8 @@ function FiltersBar({
                 onChange={(e) => onSearchChange(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${
-                  isSearchFocused ? 'border-teal-500' : 'border-gray-300'
+                className={`w-full pl-10 pr-10 py-2.5 border rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm sm:text-base ${
+                  isSearchFocused ? 'border-teal-500 shadow-md' : 'border-gray-300'
                 }`}
               />
             </form>
@@ -1095,6 +1111,7 @@ function FiltersBar({
               <button
                 onClick={() => onSearchChange('')}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label="Effacer la recherche"
               >
                 <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
               </button>
@@ -1107,15 +1124,15 @@ function FiltersBar({
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
                 >
                   {searchSuggestions.map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => onSearchChange(suggestion)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center text-sm sm:text-base"
                     >
-                      <Search className="h-4 w-4 mr-2 text-gray-400" />
+                      <Search className="h-4 w-4 mr-3 text-gray-400" />
                       {suggestion}
                     </button>
                   ))}
@@ -1125,38 +1142,39 @@ function FiltersBar({
           </div>
           
           {/* Boutons de filtres rapides */}
-          <div className="flex items-center space-x-2 overflow-x-auto">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0">
             <button
               onClick={onOpenFilters}
-              className="flex items-center px-3 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full whitespace-nowrap hover:from-teal-600 hover:to-teal-700 transition-all shadow-md"
+              className="flex items-center px-3 sm:px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm sm:text-base font-medium rounded-full whitespace-nowrap hover:from-teal-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
             >
-              <Filter className="h-4 w-4 mr-1" />
-              Filtres {activeFiltersCount > 0 && (
-                <span className="ml-1 bg-white text-teal-600 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5" />
+              <span className="hidden sm:inline">Filtres</span>
+              {activeFiltersCount > 0 && (
+                <span className="ml-1.5 bg-white text-teal-600 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {activeFiltersCount}
                 </span>
               )}
             </button>
             
-            <button className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
-              <MapPin className="h-4 w-4 mr-1" />
+            <button className="flex items-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 text-sm sm:text-base font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5" />
               <span className="hidden sm:inline">Ville</span>
             </button>
             
-            <button className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
-              <Calendar className="h-4 w-4 mr-1" />
+            <button className="flex items-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 text-sm sm:text-base font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5" />
               <span className="hidden sm:inline">Date</span>
             </button>
             
-            <button className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
-              <span className="mr-1">FCFA</span>
+            <button className="flex items-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 text-sm sm:text-base font-medium rounded-full whitespace-nowrap hover:bg-gray-200 transition-colors">
+              <span className="mr-1.5">FCFA</span>
               <span className="hidden sm:inline">Prix</span>
             </button>
           </div>
           
           {/* Bouton de vue */}
           <div className="flex items-center">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Paramètres">
               <Settings className="h-5 w-5 text-gray-600" />
             </button>
           </div>
@@ -1169,7 +1187,7 @@ function FiltersBar({
             animate={{ opacity: 1, height: 'auto' }}
             className="flex items-center space-x-2 py-2 overflow-x-auto"
           >
-            <span className="text-xs text-gray-500">Filtres actifs:</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">Filtres actifs:</span>
             {/* Les filtres actifs seraient affichés ici */}
           </motion.div>
         )}
@@ -1190,13 +1208,13 @@ function SortOptions({
   
   return (
     <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center">
           <span className="text-sm text-gray-600 mr-2">Trier par:</span>
           <div className="relative">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center text-sm font-medium text-gray-900 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center text-sm font-medium text-gray-900 bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
             >
               {sortOption === 'recent' && 'Plus récent'}
               {sortOption === 'popular' && 'Plus populaire'}
@@ -1212,11 +1230,11 @@ function SortOptions({
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-full"
+                  className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 w-full overflow-hidden"
                 >
                   <button
                     onClick={() => { onSortChange('recent'); setIsOpen(false); }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between text-sm sm:text-base ${
                       sortOption === 'recent' ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -1225,7 +1243,7 @@ function SortOptions({
                   </button>
                   <button
                     onClick={() => { onSortChange('popular'); setIsOpen(false); }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between text-sm sm:text-base ${
                       sortOption === 'popular' ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -1234,7 +1252,7 @@ function SortOptions({
                   </button>
                   <button
                     onClick={() => { onSortChange('date'); setIsOpen(false); }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between text-sm sm:text-base ${
                       sortOption === 'date' ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -1243,7 +1261,7 @@ function SortOptions({
                   </button>
                   <button
                     onClick={() => { onSortChange('price'); setIsOpen(false); }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between text-sm sm:text-base ${
                       sortOption === 'price' ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -1252,7 +1270,7 @@ function SortOptions({
                   </button>
                   <button
                     onClick={() => { onSortChange('distance'); setIsOpen(false); }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between text-sm sm:text-base ${
                       sortOption === 'distance' ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -1266,9 +1284,9 @@ function SortOptions({
         </div>
         
         <div className="flex items-center space-x-2">
-          <button className="flex items-center px-3 py-1.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <Sparkles className="h-4 w-4 mr-1 text-amber-500" />
-            Recommandé
+          <button className="flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-700 text-sm sm:text-base font-medium rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <Sparkles className="h-4 w-4 mr-1.5 text-amber-500" />
+            <span className="hidden sm:inline">Recommandé</span>
           </button>
         </div>
       </div>
@@ -1292,9 +1310,9 @@ function ResultsHeader({
 }) {
   return (
     <div className="px-4 py-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">
-          {totalCount} campagnes trouvées
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-lg sm:text-xl font-medium text-gray-900">
+          {totalCount} campagne{totalCount > 1 ? 's' : ''} trouvée{totalCount > 1 ? 's' : ''}
         </h2>
         
         <div className="flex items-center space-x-2">
@@ -1302,6 +1320,7 @@ function ResultsHeader({
             onClick={onToggleMap}
             className={`p-2 rounded-full ${showMap ? 'bg-teal-100 text-teal-600' : 'hover:bg-gray-100 text-gray-600'} transition-colors`}
             title="Afficher la carte"
+            aria-label={showMap ? "Masquer la carte" : "Afficher la carte"}
           >
             <MapPin className="h-5 w-5" />
           </button>
@@ -1309,13 +1328,15 @@ function ResultsHeader({
           <div className="flex items-center bg-gray-100 rounded-full p-1">
             <button
               onClick={() => onViewModeChange('list')}
-              className={`p-1.5 rounded-full ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+              className={`p-1.5 sm:p-2 rounded-full ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+              aria-label="Vue liste"
             >
               <List className={`h-4 w-4 ${viewMode === 'list' ? 'text-teal-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={() => onViewModeChange('grid')}
-              className={`p-1.5 rounded-full ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+              className={`p-1.5 sm:p-2 rounded-full ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+              aria-label="Vue grille"
             >
               <Grid className={`h-4 w-4 ${viewMode === 'grid' ? 'text-teal-600' : 'text-gray-600'}`} />
             </button>
@@ -1371,16 +1392,17 @@ function FiltersModal({
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Fermer les filtres"
             >
               <X className="h-5 w-5 text-gray-600" />
             </button>
           </div>
           
           {/* Onglets de navigation */}
-          <div className="flex border-b border-gray-100 px-4">
+          <div className="flex border-b border-gray-100 px-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('category')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'category' 
                   ? 'text-teal-600 border-teal-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
@@ -1390,7 +1412,7 @@ function FiltersModal({
             </button>
             <button
               onClick={() => setActiveTab('location')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'location' 
                   ? 'text-teal-600 border-teal-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
@@ -1400,7 +1422,7 @@ function FiltersModal({
             </button>
             <button
               onClick={() => setActiveTab('date')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'date' 
                   ? 'text-teal-600 border-teal-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
@@ -1410,7 +1432,7 @@ function FiltersModal({
             </button>
             <button
               onClick={() => setActiveTab('other')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'other' 
                   ? 'text-teal-600 border-teal-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
@@ -1485,7 +1507,7 @@ function FiltersModal({
                     Ville
                   </h4>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 mb-3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 mb-3"
                     value={filters.city || ''}
                     onChange={(e) => onFiltersChange({ ...filters, city: e.target.value })}
                   >
@@ -1840,7 +1862,7 @@ function EmptyState({ onResetFilters, searchTerm }: { onResetFilters: () => void
         </button>
       </div>
       
-      <div className="mt-8 p-4 bg-amber-50 rounded-lg max-w-md w-full">
+      <div className="mt-8 p-4 bg-amber-50 rounded-xl max-w-md w-full">
         <div className="flex items-start">
           <Info className="h-5 w-5 text-amber-600 mr-2 mt-0.5 shrink-0" />
           <div>
@@ -1878,17 +1900,15 @@ export default function AnnouncementsPage() {
     let filtered = [...mockAnnouncements];
     
     // Filtrage par recherche
- // ...
-  if (searchTerm) {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase(); // Optimisation : on ne le calcule qu'une fois
-    filtered = filtered.filter(announcement => 
-      announcement.title.toLowerCase().includes(lowerCaseSearchTerm) ||
-      (announcement.excerpt || '').toLowerCase().includes(lowerCaseSearchTerm) || // LIGNE CORRIGÉE
-      announcement.category?.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      announcement.organization?.name.toLowerCase().includes(lowerCaseSearchTerm)
-    );
-  }
-  // ...
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase(); // Optimisation : on ne le calcule qu'une fois
+      filtered = filtered.filter(announcement => 
+        announcement.title.toLowerCase().includes(lowerCaseSearchTerm) ||
+        (announcement.excerpt || '').toLowerCase().includes(lowerCaseSearchTerm) ||
+        announcement.category?.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        announcement.organization?.name.toLowerCase().includes(lowerCaseSearchTerm)
+      );
+    }
     
     // Filtrage par catégorie
     if (filters.category) {
@@ -1941,51 +1961,51 @@ export default function AnnouncementsPage() {
     }
     
     // Tri des résultats
-// Tri des résultats
-if (sortOption === 'recent') {
-  filtered.sort((a, b) => {
-    // Si la date est manquante, on utilise -Infinity pour la placer à la fin
-    const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : -Infinity;
-    const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : -Infinity;
-    // Tri par ordre décroissant (le plus récent en premier)
-    return dateB - dateA;
-  });
-} else if (sortOption === 'popular') {
-  filtered.sort((a, b) => b.viewsCount - a.viewsCount);
-} else if (sortOption === 'date') {
-  filtered.sort((a, b) => {
-    // Si la date est manquante, on utilise Infinity pour la placer à la fin
-    const dateA = a.startDate ? new Date(a.startDate).getTime() : Infinity;
-    const dateB = b.startDate ? new Date(b.startDate).getTime() : Infinity;
-    // Tri par ordre croissant (le plus tôt en premier)
-    return dateA - dateB;
-  });
-}
+    if (sortOption === 'recent') {
+      filtered.sort((a, b) => {
+        // Si la date est manquante, on utilise -Infinity pour la placer à la fin
+        const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : -Infinity;
+        const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : -Infinity;
+        // Tri par ordre décroissant (le plus récent en premier)
+        return dateB - dateA;
+      });
+    } else if (sortOption === 'popular') {
+      filtered.sort((a, b) => b.viewsCount - a.viewsCount);
+    } else if (sortOption === 'date') {
+      filtered.sort((a, b) => {
+        // Si la date est manquante, on utilise Infinity pour la placer à la fin
+        const dateA = a.startDate ? new Date(a.startDate).getTime() : Infinity;
+        const dateB = b.startDate ? new Date(b.startDate).getTime() : Infinity;
+        // Tri par ordre croissant (le plus tôt en premier)
+        return dateA - dateB;
+      });
+    }
     
     return filtered;
   }, [filters, searchTerm, sortOption, mockAnnouncements]);
   
   // Suggestions de recherche
- const searchSuggestions = useMemo(() => {
-  if (!searchTerm || searchTerm.length < 2) return [];
+  const searchSuggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 2) return [];
+    
+    const allTitles = mockAnnouncements.map(a => a.title);
+    const allCategories = mockCategories.map(c => c.name);
+    
+    // Correction explicite avec un type guard
+    const allOrganizations = [...new Set(
+      mockAnnouncements
+        .map(a => a.organization?.name)
+        .filter((name): name is string => Boolean(name))
+    )];
+    
+    const allSuggestions = [...allTitles, ...allCategories, ...allOrganizations];
+    
+    // TypeScript sait maintenant que 's' est toujours une chaîne de caractères
+    return allSuggestions
+      .filter(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+      .slice(0, 5);
+  }, [searchTerm, mockAnnouncements, mockCategories]);
   
-  const allTitles = mockAnnouncements.map(a => a.title);
-  const allCategories = mockCategories.map(c => c.name);
-  
-  // Correction explicite avec un type guard
-  const allOrganizations = [...new Set(
-    mockAnnouncements
-      .map(a => a.organization?.name)
-      .filter((name): name is string => Boolean(name)) // LIGNE CORRIGÉE
-  )];
-  
-  const allSuggestions = [...allTitles, ...allCategories, ...allOrganizations];
-  
-  // TypeScript sait maintenant que 's' est toujours une chaîne de caractères
-  return allSuggestions
-    .filter(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
-    .slice(0, 5);
-}, [searchTerm, mockAnnouncements, mockCategories]);
   // Afficher les suggestions lorsque le terme de recherche change
   useEffect(() => {
     setShowSuggestions(searchTerm.length >= 2 && searchSuggestions.length > 0);
@@ -2065,6 +2085,7 @@ if (sortOption === 'recent') {
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Retour"
           >
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
@@ -2072,10 +2093,10 @@ if (sortOption === 'recent') {
           <h1 className="text-lg font-semibold text-gray-900">Campagnes</h1>
           
           <div className="flex items-center space-x-2">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Rechercher">
               <Search className="h-5 w-5 text-gray-700" />
             </button>
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Paramètres">
               <Settings className="h-5 w-5 text-gray-700" />
             </button>
           </div>
@@ -2128,7 +2149,7 @@ if (sortOption === 'recent') {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 px-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-4">
                 <AnimatePresence>
                   {filteredAnnouncements.map((announcement) => (
                     <AnnouncementGridCard
