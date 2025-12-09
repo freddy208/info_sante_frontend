@@ -84,7 +84,7 @@ export default function InfoSanteOnboarding() {
       description: "La première plateforme camerounaise qui révolutionne l'accès aux soins de santé",
       icon: Activity,
       gradient: "from-teal-500 via-emerald-500 to-cyan-500",
-      image: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1200&h=800&fit=crop",
+      image: "https://res.cloudinary.com/duqsblvzm/image/upload/v1765277231/landing1_y1vebp.webp",
       features: [
         { icon: Search, text: "Trouvez les meilleurs établissements", color: "teal", emoji: "🏥" },
         { icon: MapPin, text: "Géolocalisation en temps réel", color: "emerald", emoji: "📍" },
@@ -98,7 +98,7 @@ export default function InfoSanteOnboarding() {
       description: "Des fonctionnalités puissantes pour prendre soin de votre santé et celle de vos proches",
       icon: Stethoscope,
       gradient: "from-emerald-500 via-teal-500 to-green-500",
-      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=800&fit=crop",
+      image: "https://res.cloudinary.com/duqsblvzm/image/upload/v1765277230/landing2_dxlqsc.webp",
       features: [
         { icon: FileText, text: "Dossier médical numérique sécurisé", color: "emerald", emoji: "📋" },
         { icon: Calendar, text: "Prise de rendez-vous simplifiée", color: "teal", emoji: "📅" },
@@ -112,7 +112,7 @@ export default function InfoSanteOnboarding() {
       description: "Faites partie du mouvement qui transforme l'accès à la santé au Cameroun",
       icon: Users,
       gradient: "from-cyan-500 via-teal-500 to-emerald-500",
-      image: "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=1200&h=800&fit=crop",
+      image: "https://res.cloudinary.com/duqsblvzm/image/upload/v1765277230/landing3_xzgjmk.webp",
       features: [
         { icon: Users, text: "50,000+ utilisateurs actifs", color: "cyan", emoji: "👥" },
         { icon: Star, text: "4.9/5 étoiles de satisfaction", color: "teal", emoji: "⭐" },
