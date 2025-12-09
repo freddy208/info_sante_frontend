@@ -294,10 +294,10 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, option
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={dropdownRef} className="relative w-full sm:w-auto">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <div className="flex items-center">
           {icon && <span className="mr-2 text-gray-400">{icon}</span>}
@@ -373,7 +373,7 @@ const FilterPanel: React.FC<{
                 <button
                   key={city}
                   onClick={() => toggleFilter('cities', city)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
                     activeFilters.cities.includes(city)
                       ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -388,7 +388,7 @@ const FilterPanel: React.FC<{
           {/* Filtre par Spécialité */}
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Spécialités</h4>
-            <div className="columns-2 gap-2">
+            <div className="columns-1 sm:columns-2 gap-2">
               {allSpecialties.slice(0, 10).map(specialty => (
                 <label key={specialty} className="flex items-center p-2 space-x-2 rounded-lg hover:bg-gray-50 cursor-pointer">
                   <input
@@ -427,7 +427,7 @@ const FilterPanel: React.FC<{
                   onClick={() => setActiveFilters((prev: any) => ({ ...prev, minRating: star }))}
                   className="p-1"
                 >
-                  <Star className={`w-6 h-6 transition-colors duration-200 ${
+                  <Star className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-200 ${
                     star <= activeFilters.minRating ? 'text-yellow-500 fill-current' : 'text-gray-300'
                   }`} />
                 </button>
@@ -477,7 +477,7 @@ const MapView: React.FC<{
   }, [hospitals]);
 
   return (
-    <div className="relative h-96 lg:h-[600px] bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div className="relative h-80 sm:h-96 lg:h-[600px] bg-white rounded-2xl shadow-lg overflow-hidden">
       {/* Carte OpenStreetMap avec iframe */}
       <iframe
         width="100%"
@@ -506,12 +506,12 @@ const MapView: React.FC<{
           >
             <button
               onClick={() => setSelectedHospital(hospital)}
-              className={`relative flex items-center justify-center w-10 h-10 rounded-full shadow-lg transition-all duration-200 ${
+              className={`relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full shadow-lg transition-all duration-200 ${
                 isSelected ? 'ring-4 ring-white scale-125' : 'hover:scale-110'
               }`}
               style={{ backgroundColor: markerColor }}
             >
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
             </button>
@@ -521,11 +521,11 @@ const MapView: React.FC<{
       
       {/* Contrôles de la carte */}
       <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2">
-        <button className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
-          <Plus className="w-5 h-5 text-gray-700" />
+        <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
         </button>
-        <button className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
-          <Minus className="w-5 h-5 text-gray-700" />
+        <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <Minus className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
         </button>
         {userLocation && (
           <button 
@@ -534,19 +534,19 @@ const MapView: React.FC<{
               // Ceci est une simulation, dans une vraie application, vous utiliseriez l'API de la carte
               alert(`Centrage sur votre position: ${userLocation.lat}, ${userLocation.lng}`);
             }}
-            className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
-            <Target className="w-5 h-5 text-gray-700" />
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
           </button>
         )}
       </div>
       
       {/* Popup pour l'hôpital sélectionné */}
       {selectedHospital && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 bg-white rounded-lg shadow-lg p-4 w-80">
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 bg-white rounded-lg shadow-lg p-3 sm:p-4 w-64 sm:w-80 max-w-[90vw]">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center">
-              <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
                 <img 
                   src={getCloudinaryThumbnailUrl(selectedHospital.logo, 48)} 
                   alt={selectedHospital.name}
@@ -557,10 +557,10 @@ const MapView: React.FC<{
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">{selectedHospital.name}</h3>
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{selectedHospital.name}</h3>
                 <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="ml-1 text-sm font-medium">{selectedHospital.rating}</span>
+                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current" />
+                  <span className="ml-1 text-xs sm:text-sm font-medium">{selectedHospital.rating}</span>
                 </div>
               </div>
             </div>
@@ -568,12 +568,12 @@ const MapView: React.FC<{
               onClick={() => setSelectedHospital(null)}
               className="p-1 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             </button>
           </div>
           
-          <div className="flex items-center mb-3">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          <div className="flex items-center mb-3 flex-wrap gap-1">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
               selectedHospital.type === OrganizationType.PUBLIC ? 'bg-blue-100 text-blue-800' : 
               selectedHospital.type === OrganizationType.PRIVATE ? 'bg-purple-100 text-purple-800' : 
               'bg-gray-100 text-gray-800'
@@ -581,7 +581,7 @@ const MapView: React.FC<{
               {getTypeLabel(selectedHospital.type)}
             </span>
             {userLocation && (
-              <span className="ml-2 text-sm text-gray-600">
+              <span className="text-xs text-gray-600">
                 {Math.round(
                   Math.sqrt(
                     Math.pow(selectedHospital.latitude - userLocation.lat, 2) + 
@@ -594,13 +594,13 @@ const MapView: React.FC<{
           
           {selectedHospital.emergencyAvailable && (
             <div className="flex items-center mb-3 text-sm text-gray-600">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                 Urgences 24/7
               </span>
             </div>
           )}
           
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button 
               onClick={() => {
                 navigateToHospitalDetails(selectedHospital.id);
@@ -624,7 +624,7 @@ const MapView: React.FC<{
       )}
       
       {/* Liste inférieure (drawer) */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-20 transition-transform duration-300 ${showMapDrawer ? 'translate-y-0' : 'translate-y-[calc(100%-80px)]'}`}>
+      <div className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-20 transition-transform duration-300 ${showMapDrawer ? 'translate-y-0' : 'translate-y-[calc(100%-60px)]'}`}>
         <button 
           onClick={() => setShowMapDrawer(!showMapDrawer)}
           className="w-full py-3 flex items-center justify-center"
@@ -634,7 +634,7 @@ const MapView: React.FC<{
         
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-gray-900">
+            <h3 className="font-medium text-gray-900 text-sm sm:text-base">
               {hospitals.length} hôpitaux
             </h3>
             {showMapDrawer && (
@@ -648,7 +648,7 @@ const MapView: React.FC<{
           </div>
           
           {showMapDrawer && (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-64 sm:max-h-96 overflow-y-auto">
               {hospitals.map(hospital => {
                 const isSelected = selectedHospital?.id === hospital.id;
                 
@@ -663,7 +663,7 @@ const MapView: React.FC<{
                       setShowMapDrawer(false);
                     }}
                   >
-                    <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
                       <img 
                         src={getCloudinaryThumbnailUrl(hospital.logo, 48)} 
                         alt={hospital.name}
@@ -674,12 +674,14 @@ const MapView: React.FC<{
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">{hospital.name}</h4>
-                      <div className="flex items-center">
-                        <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                        <span className="ml-1 text-xs">{hospital.rating}</span>
+                      <h4 className="font-medium text-gray-900 truncate text-sm sm:text-base">{hospital.name}</h4>
+                      <div className="flex items-center flex-wrap gap-2">
+                        <div className="flex items-center">
+                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                          <span className="ml-1 text-xs">{hospital.rating}</span>
+                        </div>
                         {userLocation && (
-                          <span className="ml-2 text-xs text-gray-500">
+                          <span className="text-xs text-gray-500">
                             {Math.round(
                               Math.sqrt(
                                 Math.pow(hospital.latitude - userLocation.lat, 2) + 
@@ -949,6 +951,14 @@ const HospitalsListPage: React.FC = () => {
       <Head>
         <title>Liste des Hôpitaux - Santé Cameroun</title>
         <meta name="description" content="Trouvez un hôpital près de vous au Cameroun" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="index, follow" />
+        <meta property="og:title" content="Liste des Hôpitaux - Santé Cameroun" />
+        <meta property="og:description" content="Trouvez un hôpital près de vous au Cameroun" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Liste des Hôpitaux - Santé Cameroun" />
+        <meta name="twitter:description" content="Trouvez un hôpital près de vous au Cameroun" />
       </Head>
 
       {/* Header */}
@@ -960,14 +970,14 @@ const HospitalsListPage: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-3 text-xl font-bold text-gray-900">Hôpitaux</h1>
+            <h1 className="ml-3 text-lg sm:text-xl font-bold text-gray-900">Hôpitaux</h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Barre de recherche et filtres principaux */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -1046,7 +1056,7 @@ const HospitalsListPage: React.FC = () => {
         />
         
         {/* En-tête des résultats */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-2 sm:space-y-0">
           <p className="text-gray-600">
             <span className="font-semibold text-gray-900">{filteredAndSortedHospitals.length}</span> hôpitaux trouvés
             {filteredAndSortedHospitals.length < mockHospitals.length && (
@@ -1055,7 +1065,7 @@ const HospitalsListPage: React.FC = () => {
               </span>
             )}
           </p>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             {filteredAndSortedHospitals.length < mockHospitals.length && (
               <button 
                 onClick={() => setShowAllHospitals(true)} 
@@ -1080,23 +1090,23 @@ const HospitalsListPage: React.FC = () => {
                 const distance = userLocation ? calculateDistance(userLocation.lat, userLocation.lng, hospital.latitude, hospital.longitude) : null;
                 return (
                   <div key={hospital.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                    <div className="p-6 lg:flex lg:items-center lg:justify-between">
+                    <div className="p-4 sm:p-6 lg:flex lg:items-center lg:justify-between">
                       <div className="flex-0 lg:flex-1">
-                        <div className="flex items-start space-x-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
                           <img 
                             src={getCloudinaryThumbnailUrl(hospital.logo, 100)} 
                             alt={hospital.name} 
-                            className="w-20 h-20 rounded-xl object-cover bg-gray-100" 
+                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover bg-gray-100" 
                             onError={(e) => { 
                               e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=100`; 
                             }} 
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
-                              <h3 className="text-xl font-bold text-gray-900 truncate">{hospital.name}</h3>
+                              <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{hospital.name}</h3>
                               {hospital.isVerified && <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />}
                             </div>
-                            <div className="flex items-center mt-1 space-x-4 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center mt-1 space-x-4 text-sm text-gray-500">
                               <div className="flex items-center">
                                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
                                 <span className="ml-1 font-semibold text-gray-700">{hospital.rating}</span> 
@@ -1109,7 +1119,7 @@ const HospitalsListPage: React.FC = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="mt-2 flex items-center space-x-2">
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
                               <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${getTypeColor(hospital.type)}`}>
                                 {getTypeLabel(hospital.type)}
                               </span>
@@ -1122,7 +1132,7 @@ const HospitalsListPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-4 lg:mt-0 lg:ml-6 lg:flex lg:items-center lg:space-x-3">
+                      <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-wrap gap-2 lg:flex-nowrap lg:items-center lg:space-x-3">
                         <button 
                           onClick={() => toggleFavorite(hospital.id)} 
                           className={`p-3 rounded-full transition-all duration-200 ${
@@ -1133,23 +1143,23 @@ const HospitalsListPage: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => callHospital(hospital.phone)} 
-                          className="flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 text-sm"
                         >
                           <Phone className="w-4 h-4 mr-2" />
-                          Appeler
+                          <span className="hidden sm:inline">Appeler</span>
                         </button>
                         <button 
                           onClick={() => navigateToHospitalDetails(hospital.id)} 
-                          className="flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 text-sm"
                         >
                           Voir profil
                         </button>
                         <button 
                           onClick={() => getDirections(hospital)} 
-                          className="flex items-center justify-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200 text-sm"
                         >
                           <Navigation className="w-4 h-4 mr-2" />
-                          Itinéraire
+                          <span className="hidden sm:inline">Itinéraire</span>
                         </button>
                       </div>
                     </div>
