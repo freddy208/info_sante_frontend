@@ -483,194 +483,230 @@ const mockCategories = [
 ];
 
 // Composant Carousel pour articles en vedette (version améliorée)
-    function FeaturedCarousel({ articles }: { articles: Article[] }) {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-    const [preloadedImages, setPreloadedImages] = useState<{[key: string]: boolean}>({});
+function FeaturedCarousel({ articles }: { articles: Article[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [preloadedImages, setPreloadedImages] = useState<{[key: string]: boolean}>({});
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  
+  const featuredArticles = articles.filter(article => article.isFeatured);
+  
+  // Gestion du swipe pour mobile
+  const minSwipeDistance = 50;
+  
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
     
-    const featuredArticles = articles.filter(article => article.isFeatured);
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
     
-    // Précharger toutes les images du carrousel
-    useEffect(() => {
-        const images: {[key: string]: boolean} = {};
-        
-        featuredArticles.forEach((article) => {
-        const img = new Image();
-        img.src = getCloudinaryImageUrl(article.featuredImage, { 
-            width: 800, 
-            height: 400, 
-            crop: 'fill',
-        });
-        img.onload = () => {
-            images[article.id] = true;
-            setPreloadedImages(prev => ({...prev, [article.id]: true}));
-        };
-        });
-    }, [featuredArticles]);
-    
-    useEffect(() => {
-        if (!isAutoPlaying || featuredArticles.length <= 1) return;
-        
-        const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % featuredArticles.length);
-        }, 5000);
-        
-        return () => clearInterval(interval);
-    }, [isAutoPlaying, featuredArticles.length]);
-    
-    const goToSlide = (index: number) => {
-        setCurrentIndex(index);
-        setIsAutoPlaying(false);
-    };
-    
-    const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % featuredArticles.length);
-    };
-    
-    const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + featuredArticles.length) % featuredArticles.length);
-    };
-    
-    if (featuredArticles.length === 0) return null;
-    
-    const currentArticle = featuredArticles[currentIndex];
-    
-    return (
-        <div className="relative w-full h-80 overflow-hidden bg-gray-900">
-        {/* Conteneur avec positionnement absolu pour éviter les espaces blancs */}
-        <div className="relative w-full h-full">
-            {/* Arrière-plan avec l'image précédente pendant la transition */}
-            {currentIndex > 0 && (
-            <div 
-                className="absolute inset-0 w-full h-full"
-                style={{
-                backgroundImage: `url(${getCloudinaryImageUrl(featuredArticles[currentIndex - 1].featuredImage, { 
-                    width: 800, 
-                    height: 400, 
-                    crop: 'fill',
-                })})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                zIndex: 1
-                }}
-            />
-            )}
-            
-            {/* Arrière-plan avec l'image suivante pendant la transition */}
-            {currentIndex < featuredArticles.length - 1 && (
-            <div 
-                className="absolute inset-0 w-full h-full"
-                style={{
-                backgroundImage: `url(${getCloudinaryImageUrl(featuredArticles[currentIndex + 1].featuredImage, { 
-                    width: 800, 
-                    height: 400, 
-                    crop: 'fill',
-                })})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                zIndex: 1
-                }}
-            />
-            )}
-            
-            <AnimatePresence mode="sync">
-            <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="relative w-full h-full z-10"
-            >
-                <img
-                src={getCloudinaryImageUrl(currentArticle.featuredImage, { 
-                    width: 800, 
-                    height: 400, 
-                    crop: 'fill',
-                })}
-                alt={currentArticle.title}
-                className="w-full h-full object-cover"
-                style={{ display: preloadedImages[currentArticle.id] ? 'block' : 'none' }}
-                />
-                
-                {/* Fallback pendant le chargement */}
-                {!preloadedImages[currentArticle.id] && (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                )}
-                
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-                
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                {/* Badge featured */}
-                <div className="inline-flex items-center px-3 py-1 bg-amber-500 rounded-full mb-3">
-                    <Star className="h-3 w-3 mr-1" />
-                    <span className="text-xs font-bold">EN VEDETTE</span>
-                </div>
-                
-                {/* Category */}
-                <div className="flex items-center mb-2">
-                    <span className="text-xs font-medium opacity-90">
-                    {currentArticle.category?.name?.toUpperCase()}
-                    </span>
-                </div>
-                
-                {/* Title */}
-                <h2 className="text-2xl font-bold mb-2 line-clamp-2">
-                    {currentArticle.title}
-                </h2>
-                
-                {/* Author info */}
-                <div className="flex items-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
-                    <User className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium mr-3">{currentArticle.author}</span>
-                    <span className="text-sm opacity-75">• {currentArticle.readingTime} min</span>
-                </div>
-                </div>
-            </motion.div>
-            </AnimatePresence>
-        </div>
-        
-        {/* Navigation arrows */}
-        {featuredArticles.length > 1 && (
-            <>
-            <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors z-20"
-            >
-                <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors z-20"
-            >
-                <ChevronRight className="h-5 w-5" />
-            </button>
-            </>
-        )}
-        
-        {/* Pagination dots */}
-        {featuredArticles.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-            {featuredArticles.map((_, index) => (
-                <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentIndex ? 'bg-white w-6' : 'bg-white/50'
-                }`}
-                />
-            ))}
-            </div>
-        )}
-        </div>
-    );
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
     }
+  };
+  
+  // Précharger toutes les images du carrousel
+  useEffect(() => {
+    const images: {[key: string]: boolean} = {};
+    
+    featuredArticles.forEach((article) => {
+      const img = new Image();
+      img.src = getCloudinaryImageUrl(article.featuredImage, { 
+        width: 800, 
+        height: 400, 
+        crop: 'fill',
+      });
+      img.onload = () => {
+        images[article.id] = true;
+        setPreloadedImages(prev => ({...prev, [article.id]: true}));
+      };
+    });
+  }, [featuredArticles]);
+  
+  useEffect(() => {
+    if (!isAutoPlaying || featuredArticles.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % featuredArticles.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, featuredArticles.length]);
+  
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    setIsAutoPlaying(false);
+  };
+  
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % featuredArticles.length);
+  };
+  
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + featuredArticles.length) % featuredArticles.length);
+  };
+  
+  if (featuredArticles.length === 0) return null;
+  
+  const currentArticle = featuredArticles[currentIndex];
+  
+  return (
+    <section 
+      className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-gray-900"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Conteneur avec positionnement absolu pour éviter les espaces blancs */}
+      <div className="relative w-full h-full">
+        {/* Arrière-plan avec l'image précédente pendant la transition */}
+        {currentIndex > 0 && (
+          <div 
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `url(${getCloudinaryImageUrl(featuredArticles[currentIndex - 1].featuredImage, { 
+                width: 800, 
+                height: 400, 
+                crop: 'fill',
+              })})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              zIndex: 1
+            }}
+          />
+        )}
+        
+        {/* Arrière-plan avec l'image suivante pendant la transition */}
+        {currentIndex < featuredArticles.length - 1 && (
+          <div 
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `url(${getCloudinaryImageUrl(featuredArticles[currentIndex + 1].featuredImage, { 
+                width: 800, 
+                height: 400, 
+                crop: 'fill',
+              })})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              zIndex: 1
+            }}
+          />
+        )}
+        
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="relative w-full h-full z-10"
+          >
+            <img
+              src={getCloudinaryImageUrl(currentArticle.featuredImage, { 
+                width: 800, 
+                height: 400, 
+                crop: 'fill',
+              })}
+              alt={currentArticle.title}
+              className="w-full h-full object-cover"
+              style={{ display: preloadedImages[currentArticle.id] ? 'block' : 'none' }}
+            />
+            
+            {/* Fallback pendant le chargement */}
+            {!preloadedImages[currentArticle.id] && (
+              <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+              {/* Badge featured */}
+              <div className="inline-flex items-center px-3 py-1 bg-amber-500 rounded-full mb-3">
+                <Star className="h-3 w-3 mr-1" />
+                <span className="text-xs font-bold">EN VEDETTE</span>
+              </div>
+              
+              {/* Category */}
+              <div className="flex items-center mb-2">
+                <span className="text-xs font-medium opacity-90">
+                  {currentArticle.category?.name?.toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Title */}
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 line-clamp-2">
+                {currentArticle.title}
+              </h2>
+              
+              {/* Author info */}
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                  <User className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-medium mr-3">{currentArticle.author}</span>
+                <span className="text-sm opacity-75">• {currentArticle.readingTime} min</span>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {/* Navigation arrows */}
+      {featuredArticles.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-300 z-20"
+            aria-label="Article précédent"
+          >
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-300 z-20"
+            aria-label="Article suivant"
+          >
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
+        </>
+      )}
+      
+      {/* Pagination dots */}
+      {featuredArticles.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+          {featuredArticles.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentIndex ? 'bg-white w-6' : 'bg-white/50'
+              }`}
+              aria-label={`Aller à l'article ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 // Composant carte d'article (vue liste)
 function ArticleCard({ article }: { article: Article }) {
@@ -698,15 +734,15 @@ function ArticleCard({ article }: { article: Article }) {
   };
   
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
       onClick={handleViewArticle}
     >
-      <div className="flex p-4">
+      <div className="flex p-3 sm:p-4">
         {/* Image */}
-        <div className="w-30 h-30 rounded-lg overflow-hidden shrink-0 mr-4">
+        <div className="w-24 h-24 sm:w-30 sm:h-30 rounded-xl overflow-hidden shrink-0 mr-3 sm:mr-4">
           <img
             src={getCloudinaryImageUrl(article.featuredImage, { 
               width: 120, 
@@ -729,7 +765,7 @@ function ArticleCard({ article }: { article: Article }) {
               </div>
               
               {/* Title */}
-              <h3 className="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
+              <h3 className="font-semibold text-gray-900 text-base sm:text-lg line-clamp-2 mb-2">
                 {article.title}
               </h3>
             </div>
@@ -740,7 +776,8 @@ function ArticleCard({ article }: { article: Article }) {
                 e.stopPropagation();
                 setIsBookmarked(!isBookmarked);
               }}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors ml-2"
+              className="p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors ml-2"
+              aria-label={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
             >
               <Bookmark className={`h-4 w-4 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
             </button>
@@ -753,11 +790,11 @@ function ArticleCard({ article }: { article: Article }) {
           
           {/* Author and date */}
           <div className="flex items-center mb-3">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
-              <User className="h-4 w-4 text-gray-600" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                 {article.author}
               </p>
               <p className="text-xs text-gray-500">
@@ -767,7 +804,7 @@ function ArticleCard({ article }: { article: Article }) {
           </div>
           
           {/* Stats */}
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
+          <div className="flex items-center space-x-3 sm:space-x-4 text-xs text-gray-500">
             <div className="flex items-center">
               <Eye className="h-3 w-3 mr-1" />
               {formatViews(article.viewsCount)}
@@ -783,7 +820,7 @@ function ArticleCard({ article }: { article: Article }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
@@ -812,7 +849,7 @@ function ArticleGridCard({ article }: { article: Article }) {
   };
   
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ y: -5 }}
@@ -821,7 +858,7 @@ function ArticleGridCard({ article }: { article: Article }) {
     >
       {/* Image */}
       <div className="relative">
-        <div className="w-full h-40 overflow-hidden">
+        <div className="w-full h-36 sm:h-40 overflow-hidden">
           <img
             src={getCloudinaryImageUrl(article.featuredImage, { 
               width: 300, 
@@ -839,21 +876,22 @@ function ArticleGridCard({ article }: { article: Article }) {
             e.stopPropagation();
             setIsBookmarked(!isBookmarked);
           }}
-          className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+          className="absolute top-2 right-2 p-1.5 sm:p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300"
+          aria-label={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-600'}`} />
+          <Bookmark className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-600'}`} />
         </button>
       </div>
       
       {/* Content */}
-      <div className="p-3">
+      <div className="p-3 sm:p-4">
         {/* Category */}
         <div className="text-xs font-medium text-teal-600 mb-1 uppercase tracking-wide">
           {article.category?.name}
         </div>
         
         {/* Title */}
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-2">
+        <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 mb-2">
           {article.title}
         </h3>
         
@@ -886,7 +924,7 @@ function ArticleGridCard({ article }: { article: Article }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
@@ -911,13 +949,13 @@ function FiltersSortSection({
   ];
   
   return (
-    <div className="bg-gray-50 px-4 py-3">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-gray-50 px-4 py-3 sticky top-0 z-20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
         {/* Filters */}
-        <div className="flex items-center space-x-2 overflow-x-auto">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0">
           <button
             onClick={onOpenFilters}
-            className="flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            className="flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
           >
             <Filter className="h-3.5 w-3.5 mr-1" />
             Filtres
@@ -928,11 +966,11 @@ function FiltersSortSection({
             )}
           </button>
           
-          <button className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
+          <button className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 whitespace-nowrap">
             Catégorie ▼
           </button>
           
-          <button className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
+          <button className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 whitespace-nowrap">
             Hôpital ▼
           </button>
         </div>
@@ -941,7 +979,7 @@ function FiltersSortSection({
         <div className="relative">
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            className="flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
           >
             Trier par: {sortOptions.find(o => o.value === sortOption)?.label}
             <ChevronDown className={`h-3.5 w-3.5 ml-1 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
@@ -953,7 +991,7 @@ function FiltersSortSection({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40"
+                className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 w-40 sm:w-48"
               >
                 {sortOptions.map((option) => (
                   <button
@@ -962,7 +1000,7 @@ function FiltersSortSection({
                       onSortChange(option.value);
                       setIsSortOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-all duration-200 flex items-center justify-between ${
                       sortOption === option.value ? 'bg-teal-50 text-teal-600' : ''
                     }`}
                   >
@@ -990,14 +1028,14 @@ function QuickCategories({
   onCategorySelect: (categoryId: string | null) => void;
 }) {
   return (
-    <div className="bg-white px-4 py-3 border-b border-gray-100">
-      <p className="text-sm text-gray-600 mb-2">Parcourir par catégorie:</p>
+    <section className="bg-white px-4 py-3 border-b border-gray-100">
+      <h2 className="text-sm font-medium text-gray-700 mb-2">Parcourir par catégorie:</h2>
       <div className="flex space-x-2 overflow-x-auto pb-2">
         <button
           onClick={() => onCategorySelect(null)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+          className={`px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
             !selectedCategory 
-              ? 'bg-teal-600 text-white' 
+              ? 'bg-teal-600 text-white shadow-md' 
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -1005,21 +1043,21 @@ function QuickCategories({
         </button>
         
         {categories.map((category) => (
-                <button
-                key={category.id}
-                onClick={() => onCategorySelect(category.id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center ${
-                    selectedCategory === category.id
-                    ? 'bg-teal-600 text-white'
-                    : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-                >
-                <span className="mr-1">{category.icon}</span>
-                {category.name}
-                </button>
+          <button
+            key={category.id}
+            onClick={() => onCategorySelect(category.id)}
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 flex items-center ${
+              selectedCategory === category.id
+                ? 'bg-teal-600 text-white shadow-md'
+                : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="mr-1">{category.icon}</span>
+            {category.name}
+          </button>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -1052,8 +1090,9 @@ function FiltersModal({
         className="fixed inset-0 z-50 flex items-end justify-center"
       >
         <div
-          className="absolute inset-0 bg-black/50"
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={onClose}
+          aria-label="Fermer le modal"
         />
         
         <motion.div
@@ -1064,27 +1103,28 @@ function FiltersModal({
           className="relative bg-white rounded-t-3xl w-full max-h-[85vh] overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
+          <header className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between z-10">
+            <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 transition-all duration-300"
+              aria-label="Fermer"
             >
               <X className="h-5 w-5 text-gray-600" />
             </button>
-          </div>
+          </header>
           
           {/* Content */}
-          <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+          <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4 space-y-6">
             {/* Category */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Catégorie</h4>
+            <section>
+              <h3 className="font-medium text-gray-900 mb-3">Catégorie</h3>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="category"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={!filters.category}
                     onChange={() => onFiltersChange({ ...filters, category: undefined })}
                   />
@@ -1092,11 +1132,11 @@ function FiltersModal({
                 </label>
                 
                 {categories.map((category) => (
-                  <label key={category.id} className="flex items-center">
+                  <label key={category.id} className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="category"
-                      className="mr-2"
+                      className="mr-3 text-teal-600 focus:ring-teal-500"
                       checked={filters.category === category.id}
                       onChange={() => onFiltersChange({ ...filters, category: category.id })}
                     />
@@ -1104,108 +1144,108 @@ function FiltersModal({
                   </label>
                 ))}
               </div>
-            </div>
+            </section>
             
             {/* Reading time */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Temps de lecture</h4>
+            <section>
+              <h3 className="font-medium text-gray-900 mb-3">Temps de lecture</h3>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="readingTime"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.readingTime === 'short'}
                     onChange={() => onFiltersChange({ ...filters, readingTime: 'short' })}
                   />
                   <span className="text-sm">Lecture rapide (&lt; 5 min)</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="readingTime"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.readingTime === 'medium'}
                     onChange={() => onFiltersChange({ ...filters, readingTime: 'medium' })}
                   />
                   <span className="text-sm">Lecture moyenne (5-10 min)</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="readingTime"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.readingTime === 'long'}
                     onChange={() => onFiltersChange({ ...filters, readingTime: 'long' })}
                   />
                   <span className="text-sm">Lecture longue (&gt; 10 min)</span>
                 </label>
               </div>
-            </div>
+            </section>
             
             {/* Date */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Date de publication</h4>
+            <section>
+              <h3 className="font-medium text-gray-900 mb-3">Date de publication</h3>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="date"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={!filters.date}
                     onChange={() => onFiltersChange({ ...filters, date: undefined })}
                   />
                   <span className="text-sm">Toutes</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="date"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.date === 'week'}
                     onChange={() => onFiltersChange({ ...filters, date: 'week' })}
                   />
                   <span className="text-sm">Cette semaine</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="date"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.date === 'month'}
                     onChange={() => onFiltersChange({ ...filters, date: 'month' })}
                   />
                   <span className="text-sm">Ce mois-ci</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="date"
-                    className="mr-2"
+                    className="mr-3 text-teal-600 focus:ring-teal-500"
                     checked={filters.date === 'year'}
                     onChange={() => onFiltersChange({ ...filters, date: 'year' })}
                   />
                   <span className="text-sm">Cette année</span>
                 </label>
               </div>
-            </div>
+            </section>
           </div>
           
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4 flex items-center justify-between">
+          <footer className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4 flex items-center justify-between">
             <button
               onClick={onResetFilters}
-              className="px-4 py-2 text-gray-700 font-medium"
+              className="px-4 py-2 text-gray-700 font-medium hover:text-gray-900 transition-colors"
             >
               Réinitialiser
             </button>
             <button
               onClick={() => { onApplyFilters(); onClose(); }}
-              className="px-6 py-2 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-colors"
+              className="px-6 py-2 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-all duration-300 shadow-md"
             >
               Appliquer les filtres
             </button>
-          </div>
+          </footer>
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -1215,14 +1255,14 @@ function FiltersModal({
 // Composant état vide
 function EmptyState({ onResetFilters }: { onResetFilters: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-60 h-45 bg-gray-100 rounded-lg flex items-center justify-center mb-6">
+    <section className="flex flex-col items-center justify-center py-16 px-4">
+      <div className="w-60 h-45 bg-gray-100 rounded-xl flex items-center justify-center mb-6">
         <FileText className="h-20 w-20 text-gray-400" />
       </div>
       
-      <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+      <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">
         Aucun article trouvé
-      </h3>
+      </h2>
       
       <p className="text-gray-600 text-center mb-6 max-w-md">
         Essayez d&apos;ajuster vos filtres ou explorez d&apos;autres catégories.
@@ -1231,18 +1271,18 @@ function EmptyState({ onResetFilters }: { onResetFilters: () => void }) {
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={onResetFilters}
-          className="px-6 py-2.5 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors"
+          className="px-6 py-2.5 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-all duration-300"
         >
           Réinitialiser les filtres
         </button>
-        <button className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-colors">
+        <button className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-all duration-300 shadow-md">
           Voir tous les articles
         </button>
       </div>
-    </div>
+    </section>
   );
 }
-
+// Page principale
 // Page principale
 export default function ArticlesPage() {
   const router = useRouter();
@@ -1339,7 +1379,8 @@ export default function ArticlesPage() {
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 transition-all duration-300"
+            aria-label="Retour"
           >
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
@@ -1347,10 +1388,16 @@ export default function ArticlesPage() {
           <h1 className="text-lg font-semibold text-gray-900">Articles de santé</h1>
           
           <div className="flex items-center space-x-2">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button 
+              className="p-2 rounded-full hover:bg-gray-100 transition-all duration-300"
+              aria-label="Rechercher"
+            >
               <Search className="h-5 w-5 text-gray-700" />
             </button>
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button 
+              className="p-2 rounded-full hover:bg-gray-100 transition-all duration-300"
+              aria-label="Paramètres"
+            >
               <Settings className="h-5 w-5 text-gray-700" />
             </button>
           </div>
@@ -1385,13 +1432,19 @@ export default function ArticlesPage() {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-full ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+              className={`p-1.5 rounded-full transition-all duration-300 ${
+                viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Vue liste"
             >
               <List className={`h-4 w-4 ${viewMode === 'list' ? 'text-teal-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-full ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+              className={`p-1.5 rounded-full transition-all duration-300 ${
+                viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Vue grille"
             >
               <Grid className={`h-4 w-4 ${viewMode === 'grid' ? 'text-teal-600' : 'text-gray-600'}`} />
             </button>
@@ -1436,7 +1489,7 @@ export default function ArticlesPage() {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoading}
-                className="px-6 py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors disabled:opacity-50"
+                className="px-6 py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-all duration-300 disabled:opacity-50 shadow-md"
               >
                 {isLoading ? (
                   <>
