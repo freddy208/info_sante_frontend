@@ -5,6 +5,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { Heart, Shield, Activity, Sparkles, ArrowRight, Zap, Users, MapPin, Search, Clock, Star, TrendingUp, Award, Bell, Calendar, Phone, FileText, ChevronRight, Stethoscope, Briefcase, Hospital } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 export default function InfoSanteOnboarding() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -120,18 +121,21 @@ export default function InfoSanteOnboarding() {
       ]
     }
   ];
+  const router = useRouter();
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      alert('Redirection vers /auth/inscription');
-    }
-  };
 
-  const skipOnboarding = () => {
-    alert('Redirection vers /accueil');
-  };
+const nextStep = () => {
+  if (currentStep < steps.length - 1) {
+    setCurrentStep(currentStep + 1);
+  } else {
+    alert('Redirection vers /auth/inscription');
+  }
+};
+
+const skipOnboarding = () => {
+  alert('Redirection vers /accueil');
+};
+
 
   const currentStepData = steps[currentStep];
   const Icon = currentStepData.icon;
