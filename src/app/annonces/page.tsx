@@ -642,6 +642,10 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
 const handleViewDetails = () => {
   router.push(`/annonces/details/${announcement.id || announcement.slug}`);
 };
+
+const handleViewDetails2 = () => {
+  router.push(`/annonces/details`);
+};
   
   // Fonction pour formater la date (corrigée)
   const formatDate = (date: Date | string) => {
@@ -860,7 +864,7 @@ const getCategoryColor = (categoryName: string) => {
           </button>
           
           <button 
-            onClick={handleViewDetails}
+            onClick={handleViewDetails2}
             className="w-full sm:w-auto px-4 sm:px-5 py-2 bg-teal-600 text-white text-sm sm:text-base font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg"
           >
             S&apos;inscrire
