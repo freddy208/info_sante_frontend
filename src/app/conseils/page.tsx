@@ -401,7 +401,7 @@ const mockCategories = [
 export default function AdvicesPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false); // ← Ajouter cette ligne
+  const [isClient, setIsClient] = useState(false);
   const [advices, setAdvices] = useState<Advice[]>(mockAdvices);
   const [filteredAdvices, setFilteredAdvices] = useState<Advice[]>(mockAdvices);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -411,6 +411,11 @@ export default function AdvicesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(mockAdvices.length);
+  
+  // S'assurer que le code s'exécute côté client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // Featured advice (high priority)
   const featuredAdvice = useMemo(() => {
@@ -469,21 +474,21 @@ export default function AdvicesPage() {
   };
   
   // Format audience
-    // Format audience
-    const formatAudience = (audience: TargetAudience[]) => {
+  const formatAudience = (audience: TargetAudience[]) => {
     if (audience.includes(TargetAudience.ALL)) return 'Tout public';
     
     const audienceMap = {
-        [TargetAudience.ALL]: 'Tout public',  // ← Ajouter cette ligne
-        [TargetAudience.CHILDREN]: 'Enfants',
-        [TargetAudience.INFANTS]: 'Nourrissons',
-        [TargetAudience.ADULTS]: 'Adultes',
-        [TargetAudience.ELDERLY]: 'Personnes âgées',
-        [TargetAudience.PREGNANT_WOMEN]: 'Femmes enceintes',
+      [TargetAudience.ALL]: 'Tout public',
+      [TargetAudience.CHILDREN]: 'Enfants',
+      [TargetAudience.INFANTS]: 'Nourrissons',
+      [TargetAudience.ADULTS]: 'Adultes',
+      [TargetAudience.ELDERLY]: 'Personnes âgées',
+      [TargetAudience.PREGNANT_WOMEN]: 'Femmes enceintes',
     };
     
     return audience.map(a => audienceMap[a]).join(', ');
-    };
+  };
+  
   // Format stats
   const formatStats = (count: number) => {
     if (count >= 1000) {
@@ -507,10 +512,11 @@ export default function AdvicesPage() {
     navigator.clipboard.writeText(window.location.origin + '/advices/' + id);
     toast('Lien copié!', { icon: '📋' });
   };
-    // Handle view details
-    const handleViewDetails = (id: string, slug: string) => {
+  
+  // Handle view details
+  const handleViewDetails = (id: string, slug: string) => {
     router.push(`/conseils/details`);
-    };
+  };
   
   // Load more
   const handleLoadMore = () => {
@@ -529,39 +535,40 @@ export default function AdvicesPage() {
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Retour"
           >
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           
           <h1 className="text-lg font-semibold text-gray-900">Conseils santé</h1>
           
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Rechercher">
             <Search className="h-5 w-5 text-gray-700" />
           </button>
         </div>
       </header>
       
       {/* Hero Banner */}
-      <div className="bg-linear-to-r from-teal-600 to-teal-400 px-6 py-8 rounded-b-3xl">
+      <section className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 sm:px-6 py-6 sm:py-8 rounded-b-3xl">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
-            <Sparkles className="h-8 w-8 text-white" />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
+            <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
           </div>
           
-          <h2 className="text-2xl font-bold text-white mb-2">Conseils santé du jour</h2>
-          <p className="text-white/80">Découvrez des astuces quotidiennes pour rester en bonne santé</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Conseils santé du jour</h2>
+          <p className="text-white/80 text-sm sm:text-base max-w-md">Découvrez des astuces quotidiennes pour rester en bonne santé</p>
         </div>
-      </div>
+      </section>
       
       {/* Filters Bar */}
-      <div className="bg-white px-4 py-4 border-b border-gray-100">
+      <section className="bg-white px-4 py-4 border-b border-gray-100">
         {/* Categories */}
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">Catégories:</p>
           <div className="flex space-x-2 overflow-x-auto pb-2">
             <button
               onClick={() => setSelectedCategory('')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                 !selectedCategory
                   ? 'bg-teal-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -574,7 +581,7 @@ export default function AdvicesPage() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center ${
+                className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors flex items-center ${
                   selectedCategory === category.id
                     ? 'bg-teal-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -594,7 +601,7 @@ export default function AdvicesPage() {
             onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
           >
-            <span>
+            <span className="text-sm sm:text-base">
               {selectedPriority === 'all' 
                 ? 'Toutes' 
                 : getPriorityInfo(selectedPriority as Priority).label
@@ -620,7 +627,7 @@ export default function AdvicesPage() {
                     selectedPriority === 'all' ? 'bg-teal-50 text-teal-600' : ''
                   }`}
                 >
-                  <span>Toutes</span>
+                  <span className="text-sm sm:text-base">Toutes</span>
                   {selectedPriority === 'all' && <Check className="h-4 w-4" />}
                 </button>
                 
@@ -640,7 +647,7 @@ export default function AdvicesPage() {
                         className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: getPriorityInfo(priority).color }}
                       />
-                      <span>{getPriorityInfo(priority).label}</span>
+                      <span className="text-sm sm:text-base">{getPriorityInfo(priority).label}</span>
                     </div>
                     {selectedPriority === priority && <Check className="h-4 w-4" />}
                   </button>
@@ -649,203 +656,202 @@ export default function AdvicesPage() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </section>
             
-        {/* Featured Advice */}
-        {featuredAdvice && (
-        <div className="px-4 py-4">
-            <motion.div
+      {/* Featured Advice */}
+      {featuredAdvice && (
+        <section className="px-4 py-4">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-linear-to-br from-amber-50 to-white border-2 border-amber-500 rounded-2xl p-6 shadow-lg"
-            onClick={() => handleViewDetails(featuredAdvice.id,  featuredAdvice.title.toLowerCase().replace(/\s+/g, '-'))}
-            >
+            className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-500 rounded-2xl p-4 sm:p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-300"
+            onClick={() => handleViewDetails(featuredAdvice.id, featuredAdvice.title.toLowerCase().replace(/\s+/g, '-'))}
+          >
             <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-linear-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-4 text-3xl">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-4 text-2xl sm:text-3xl">
                 {featuredAdvice.icon}
+              </div>
+              
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">{featuredAdvice.title}</h3>
+              
+              <p className="text-gray-700 text-sm sm:text-base mb-6 text-center line-clamp-3">{featuredAdvice.content}</p>
+              
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  {featuredAdvice.organization?.name}
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{featuredAdvice.title}</h3>
-                
-                <p className="text-gray-700 mb-6 text-center">{featuredAdvice.content}</p>
-                
-                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                <div className="flex items-center text-sm text-gray-600">
-                    <Home className="h-4 w-4 mr-1" />
-                    {featuredAdvice.organization?.name}
-                </div>
-                
-                <div className="flex items-center text-sm text-gray-600">
-                    <Target className="h-4 w-4 mr-1" />
-                    {formatAudience(featuredAdvice.targetAudience || [])}
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  {formatAudience(featuredAdvice.targetAudience || [])}
                 </div>
                 
                 {(() => {
-                    const priorityInfo = getPriorityInfo(featuredAdvice.priority);
-                    return (
-                    <div className="flex items-center text-sm text-gray-600">
-                        {priorityInfo.icon && <priorityInfo.icon className="h-4 w-4 mr-1" />}
-                        <span style={{ color: priorityInfo.color }}>
+                  const priorityInfo = getPriorityInfo(featuredAdvice.priority);
+                  return (
+                    <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                      {priorityInfo.icon && <priorityInfo.icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />}
+                      <span style={{ color: priorityInfo.color }}>
                         Priorité {priorityInfo.label}
-                        </span>
+                      </span>
                     </div>
-                    );
+                  );
                 })()}
-                </div>
-                
-                <div className="flex items-center space-x-6 text-sm text-gray-600">
+              </div>
+              
+              <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-sm text-gray-600">
                 <button
-                    onClick={() => handleLike(featuredAdvice.id)}
-                    className="flex items-center hover:text-red-500 transition-colors"
+                  onClick={() => handleLike(featuredAdvice.id)}
+                  className="flex items-center hover:text-red-500 transition-colors"
                 >
-                    <Heart className="h-4 w-4 mr-1" />
-                    {formatStats(featuredAdvice.reactionsCount)}
+                  <Heart className="h-4 w-4 mr-1" />
+                  {formatStats(featuredAdvice.reactionsCount)}
                 </button>
                 
                 <button className="flex items-center hover:text-blue-500 transition-colors">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    45
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  45
                 </button>
                 
                 <button
-                    onClick={() => handleShare(featuredAdvice.id)}
-                    className="flex items-center hover:text-green-500 transition-colors"
+                  onClick={() => handleShare(featuredAdvice.id)}
+                  className="flex items-center hover:text-green-500 transition-colors"
                 >
-                    <Share2 className="h-4 w-4 mr-1" />
-                    {formatStats(featuredAdvice.sharesCount)}
+                  <Share2 className="h-4 w-4 mr-1" />
+                  {formatStats(featuredAdvice.sharesCount)}
                 </button>
-                </div>
+              </div>
             </div>
-            </motion.div>
-        </div>
-        )}
+          </motion.div>
+        </section>
+      )}
       
       {/* All Advices Header */}
-      <div className="px-4 py-4">
+      <section className="px-4 py-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-semibold text-gray-900">Tous les conseils</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Tous les conseils</h3>
         </div>
         
         <p className="text-sm text-gray-500">{total} conseils disponibles</p>
-      </div>
+      </section>
       
       {/* Advice Cards */}
-    {/* Advice Cards */}
-    <div className="px-4 pb-24">
-    <div className="space-y-4">
-        {filteredAdvices.slice(0, page * 6).map((advice) => {
-        const priorityInfo = getPriorityInfo(advice.priority);
-        
-        return (
-            <motion.div
-            key={advice.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
-            style={{
-                borderLeft: `4px solid ${priorityInfo.color}`,
-                backgroundColor: priorityInfo.bgColor + '20'
-            }}
-            onClick={() => handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'))}
-            >
-            <div className="p-5">
-                <div className="flex items-start">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-4 shadow-sm">
-                    <span className="text-2xl">{advice.icon}</span>
+      <main className="px-4 pb-24">
+        <div className="space-y-4">
+          {filteredAdvices.slice(0, page * 6).map((advice) => {
+            const priorityInfo = getPriorityInfo(advice.priority);
+            
+            return (
+              <motion.article
+                key={advice.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+                style={{
+                  borderLeft: `4px solid ${priorityInfo.color}`,
+                  backgroundColor: priorityInfo.bgColor + '20'
+                }}
+                onClick={() => handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'))}
+              >
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start">
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-4 shadow-sm flex-shrink-0">
+                      <span className="text-xl sm:text-2xl">{advice.icon}</span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{advice.title}</h4>
+                      
+                      <p className="text-gray-700 text-sm sm:text-base mb-4 line-clamp-2">{advice.content}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 text-xs sm:text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {advice.organization?.name}
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {formatAudience(advice.targetAudience || [])}
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <div 
+                            className="w-2 h-2 rounded-full mr-1"
+                            style={{ backgroundColor: priorityInfo.color }}
+                          />
+                          <span style={{ color: priorityInfo.color }}>
+                            Priorité {priorityInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 sm:space-x-4 text-sm text-gray-600">
+                          <button
+                            onClick={() => handleLike(advice.id)}
+                            className="flex items-center hover:text-red-500 transition-colors"
+                          >
+                            <Heart className="h-4 w-4 mr-1" />
+                            {formatStats(advice.reactionsCount)}
+                          </button>
+                          
+                          <button className="flex items-center hover:text-blue-500 transition-colors">
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            {isClient ? Math.floor(Math.random() * 100) : 0}
+                          </button>
+                          
+                          <button
+                            onClick={() => handleShare(advice.id)}
+                            className="flex items-center hover:text-green-500 transition-colors"
+                          >
+                            <Share2 className="h-4 w-4 mr-1" />
+                            {formatStats(advice.sharesCount)}
+                          </button>
+                        </div>
+                        
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'));
+                          }}
+                          className="text-teal-600 hover:text-teal-700 transition-colors flex items-center text-sm sm:text-base font-medium"
+                        >
+                          Voir plus
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">{advice.title}</h4>
-                    
-                    <p className="text-gray-700 text-sm mb-4 line-clamp-2">{advice.content}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-3 mb-4 text-xs text-gray-600">
-                    <div className="flex items-center">
-                        <Home className="h-3 w-3 mr-1" />
-                        {advice.organization?.name}
-                    </div>
-                    
-                    <div className="flex items-center">
-                        <Target className="h-3 w-3 mr-1" />
-                        {formatAudience(advice.targetAudience || [])}
-                    </div>
-                    
-                    <div className="flex items-center">
-                        <div 
-                        className="w-2 h-2 rounded-full mr-1"
-                        style={{ backgroundColor: priorityInfo.color }}
-                        />
-                        <span style={{ color: priorityInfo.color }}>
-                        Priorité {priorityInfo.label}
-                        </span>
-                    </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-  <button
-    onClick={() => handleLike(advice.id)}
-    className="flex items-center hover:text-red-500 transition-colors"
-  >
-    <Heart className="h-4 w-4 mr-1" />
-    {formatStats(advice.reactionsCount)}
-  </button>
-  
-  <button className="flex items-center hover:text-blue-500 transition-colors">
-    <MessageCircle className="h-4 w-4 mr-1" />
-    {isClient ? Math.floor(Math.random() * 100) : 0}
-  </button>
-  
-  <button
-    onClick={() => handleShare(advice.id)}
-    className="flex items-center hover:text-green-500 transition-colors"
-  >
-    <Share2 className="h-4 w-4 mr-1" />
-    {formatStats(advice.sharesCount)}
-  </button>
-</div>
-                    
-                    <button 
-                        onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'));
-                        }}
-                        className="text-teal-600 hover:text-teal-700 transition-colors flex items-center"
-                    >
-                        Voir plus
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                    </button>
-                    </div>
-                </div>
-                </div>
-            </div>
-            </motion.div>
-        );
-        })}
-    </div>
-    
-    {/* Load More */}
-    {page < totalPages && (
-        <div className="flex justify-center mt-8">
-        <button
-            onClick={handleLoadMore}
-            className="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-colors flex items-center"
-        >
-            {isLoading ? (
-            <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Chargement...
-            </>
-            ) : (
-            <>
-                Charger plus de conseils ({Math.min(6, total - page * 6)})
-            </>
-            )}
-        </button>
+              </motion.article>
+            );
+          })}
         </div>
-    )}
-    </div>
+        
+        {/* Load More */}
+        {page < totalPages && (
+          <div className="flex justify-center mt-6 sm:mt-8">
+            <button
+              onClick={handleLoadMore}
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-white border border-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-colors flex items-center text-sm sm:text-base"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Chargement...
+                </>
+              ) : (
+                <>
+                  Charger plus de conseils ({Math.min(6, total - page * 6)})
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
