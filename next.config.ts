@@ -4,7 +4,7 @@ import path from 'path';
 
 const nextConfig: NextConfig = {
   // La ligne turbopack: {} a été supprimée
-  outputFileTracingRoot: path.join(__dirname, '../../'), 
+  //outputFileTracingRoot: path.join(__dirname, '../../'), 
   images: {
     remotePatterns: [
       {
