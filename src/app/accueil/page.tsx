@@ -1269,7 +1269,6 @@ const { data: articlesData, isLoading: articlesLoading } = useQuery({
 });
 
 // Récupérer les hôpitaux pour la carte avec fallback sur les données mock
-// Récupérer les hôpitaux pour la carte avec fallback sur les données mock
 const { data: hospitalsData, isLoading: hospitalsLoading } = useQuery({
   queryKey: ['organizations', 'hospitals', { limit: 50 }],
   queryFn: () => organizationsApi.getOrganizations({ limit: 50 }),
@@ -1309,8 +1308,6 @@ const { data: hospitalsData, isLoading: hospitalsLoading } = useQuery({
   };
 
   // Fonction pour obtenir l'icône de catégorie
-// Fonction pour obtenir l'icône de catégorie
-// Fonction pour obtenir l'icône de catégorie (accepte string ou Category)
 const getCategoryIcon = (category: Category | string) => {
   // Si c'est une chaîne, utiliser la correspondance basée sur le nom
   if (typeof category === 'string') {
@@ -1348,6 +1345,7 @@ const getCategoryIcon = (category: Category | string) => {
   if (name.includes('hygi')) return '🧼';
   return '🏥'; // Icône par défaut
 };
+
 // Fonction pour obtenir la couleur de catégorie (affinée)
 const getCategoryColor = (categoryName: string) => {
   const name = categoryName.toLowerCase();
@@ -1417,34 +1415,33 @@ const getInitials = (name: string) => {
       {/* Header / Navigation Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16 md:h-20">
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-500 rounded-full blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative bg-white p-2 rounded-full shadow-2xl">
-                    <Activity className="w-8 h-8 text-teal-600" strokeWidth={2.5} />
+                  <div className="relative bg-white p-1.5 sm:p-2 rounded-full shadow-2xl">
+                    <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600" strokeWidth={2.5} />
                   </div>
                 </div>
-                <span className="ml-3 text-xl font-semibold text-gray-900">Info santé Cameroun</span>
+                <span className="ml-2 sm:ml-3 text-lg sm:text-xl font-semibold text-gray-900">Info santé Cameroun</span>
               </Link>
             </div>
 
             {/* Navigation Desktop */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden md:flex space-x-6 lg:space-x-8">
               <Link href="/accueil" className="text-gray-900 hover:text-teal-600 font-medium transition-colors">Accueil</Link>
               <Link href="/annonces" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Campagnes</Link>
               <Link href="/articles" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Articles</Link>
-
               <Link href="/conseils" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Conseils</Link>
               <Link href="/hopitals" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Hopitaux</Link>
             </nav>
 
             {/* Boutons Connexion/Inscription Desktop */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Link href="/auth/connexion" className="px-4 py-2 text-teal-600 font-medium hover:text-teal-700 transition-colors">Connexion</Link>
-              <Link href="/auth/inscription" className="px-4 py-2 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all">Inscription</Link>
+            <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
+              <Link href="/auth/connexion" className="px-3 lg:px-4 py-2 text-teal-600 font-medium hover:text-teal-700 transition-colors text-sm lg:text-base">Connexion</Link>
+              <Link href="/auth/inscription" className="px-3 lg:px-4 py-2 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all text-sm lg:text-base">Inscription</Link>
             </div>
 
             {/* Menu Mobile */}
@@ -1452,6 +1449,7 @@ const getInitials = (name: string) => {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-md text-gray-700 hover:text-teal-600 hover:bg-gray-100 focus:outline-none"
+                aria-label="Menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
@@ -1483,20 +1481,20 @@ const getInitials = (name: string) => {
       </header>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative mt-20 bg-linear-to-br from-teal-600 via-blue-600 to-cyan-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section ref={heroRef} className="relative mt-16 md:mt-20 bg-linear-to-br from-teal-600 via-blue-600 to-cyan-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 lg:py-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Column */}
             <div className="text-white">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
                 Toute l&apos;information sanitaire du Cameroun en un seul endroit
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-white/90">
+              <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-white/90">
                 Recevez les alertes des campagnes de vaccination, dépistages et consultations gratuites près de chez vous.
               </p>
               
               {/* Search Bar */}
-              <form onSubmit={searchForm.handleSubmit(handleSearch)} className="relative mb-8">
+              <form onSubmit={searchForm.handleSubmit(handleSearch)} className="relative mb-6 sm:mb-8">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Search className="h-5 w-5 text-gray-400" />
@@ -1504,13 +1502,14 @@ const getInitials = (name: string) => {
                   <input
                     type="text"
                     {...searchForm.register('query')}
-                    className="block w-full pl-12 pr-12 py-4 text-gray-900 bg-white border border-gray-300 rounded-full shadow-lg focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none"
+                    className="block w-full pl-12 pr-12 py-3 sm:py-4 text-gray-900 bg-white border border-gray-300 rounded-full shadow-lg focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none text-sm sm:text-base"
                     placeholder="Rechercher..."
                   />
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
                     <button
                       type="submit"
                       className="p-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                      aria-label="Rechercher"
                     >
                       <ArrowRight className="h-5 w-5" />
                     </button>
@@ -1519,65 +1518,65 @@ const getInitials = (name: string) => {
               </form>
 
               {/* Suggestions populaires */}
-              <div className="flex flex-wrap gap-2 mb-8">
+              <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
                 <button
                   onClick={() => searchForm.setValue('query', 'Vaccination')}
-                  className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors text-sm sm:text-base"
                 >
                   💉 Vaccination
                 </button>
                 <button
                   onClick={() => searchForm.setValue('query', 'Dépistage VIH')}
-                  className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors text-sm sm:text-base"
                 >
                   🔬 Dépistage VIH
                 </button>
                 <button
                   onClick={() => searchForm.setValue('query', 'Consultation gratuite')}
-                  className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors text-sm sm:text-base"
                 >
                   🏥 Consultation gratuite
                 </button>
               </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-teal-100 rounded-xl">
-                      <Bell className="h-6 w-6 text-teal-600" />
+              {/* Stats Cards - CORRIGÉ POUR LE RESPONSIVE */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-teal-100 rounded-lg sm:rounded-xl">
+                      <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
                     </div>
-                    <div className="text-teal-600 text-sm font-medium">+12%</div>
+                    <div className="text-teal-600 text-xs sm:text-sm font-medium">+12%</div>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">500+</p>
-                  <p className="text-sm text-gray-600">Annonces</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">500+</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Annonces</p>
                 </div>
                 
-                <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-blue-100 rounded-xl">
-                      <MapPin className="h-6 w-6 text-blue-600" />
+                <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-blue-100 rounded-lg sm:rounded-xl">
+                      <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                     </div>
-                    <div className="text-blue-600 text-sm font-medium">+8%</div>
+                    <div className="text-blue-600 text-xs sm:text-sm font-medium">+8%</div>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">200+</p>
-                  <p className="text-sm text-gray-600">Hôpitaux</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">200+</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Hôpitaux</p>
                 </div>
                 
-                <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-purple-100 rounded-xl">
-                      <Users className="h-6 w-6 text-purple-600" />
+                <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-purple-100 rounded-lg sm:rounded-xl">
+                      <Users className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                     </div>
-                    <div className="text-purple-600 text-sm font-medium">+25%</div>
+                    <div className="text-purple-600 text-xs sm:text-sm font-medium">+25%</div>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">50K+</p>
-                  <p className="text-sm text-gray-600">Utilisateurs</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">50K+</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Utilisateurs</p>
                 </div>
               </div>
             </div>
 
-            {/* Right Column - Illustration https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80 */}
+            {/* Right Column - Illustration */}
             <div className="hidden lg:block">
               <div className="relative">
                 <div className="absolute inset-0 bg-linear-to-r from-teal-400/20 to-blue-400/20 rounded-3xl blur-3xl"></div>
@@ -1585,7 +1584,7 @@ const getInitials = (name: string) => {
                   <img
                     src="https://res.cloudinary.com/duqsblvzm/image/upload/v1765157251/logoHeader_f6pnu3.webp"
                     alt="Healthcare workers"
-                    className="rounded-3xl shadow-2xl w-full h-[500px] object-cover"
+                    className="rounded-3xl shadow-2xl w-full h-[400px] lg:h-[500px] object-cover"
                   />
                 </div>
               </div>
@@ -1594,21 +1593,21 @@ const getInitials = (name: string) => {
         </div>
       </section>
 
-      {/* Dernières Annonces Section */}
-      <section ref={announcementsRef} className="py-20 bg-gray-50">
+      {/* Dernières Annonces Section - CORRIGÉ POUR LE RESPONSIVE */}
+      <section ref={announcementsRef} className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Dernières annonces</h2>
-            <Link href="/annonces" className="text-teal-600 hover:text-teal-700 font-medium flex items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Dernières annonces</h2>
+            <Link href="/annonces" className="text-teal-600 hover:text-teal-700 font-medium flex items-center text-sm sm:text-base whitespace-nowrap">
               Voir tout <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
 
           {/* Filtres rapides */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-colors text-sm sm:text-base ${
                 selectedCategory === null
                   ? 'bg-teal-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -1620,7 +1619,7 @@ const getInitials = (name: string) => {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-colors text-sm sm:text-base ${
                   selectedCategory === category.id
                     ? 'bg-teal-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -1637,7 +1636,7 @@ const getInitials = (name: string) => {
               <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
             </div>
           ) : !Array.isArray(announcementsData?.data) || announcementsData?.data.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+            <div className="bg-white rounded-2xl shadow-md p-8 sm:p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="h-8 w-8 text-gray-400" />
               </div>
@@ -1648,42 +1647,42 @@ const getInitials = (name: string) => {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {announcementsData?.data.map((announcement) => (
                 <motion.div
                   key={announcement.id}
                   whileHover={{ y: -5 }}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                  className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                 >
                   <div className="relative">
                     <img
                       src={getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })}
                       alt={announcement.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-40 sm:h-48 object-cover"
                     />
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-2">
-                      <Bookmark className="h-4 w-4 text-gray-600" />
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 sm:p-2">
+                      <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
                     </div>
                     <div className="absolute top-2 left-2 bg-teal-600 text-white text-xs font-medium px-2 py-1 rounded-full">
                       {getCategoryIcon(announcement.category?.name || '')} {announcement.category?.name}
                     </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{announcement.title}</h3>
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <MapPin className="h-4 w-4 mr-1" />
+                  <div className="p-3 sm:p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">{announcement.title}</h3>
+                    <div className="flex items-center text-xs sm:text-sm text-gray-600 mb-2">
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       {announcement.location?.city}, {announcement.location?.region}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <Calendar className="h-4 w-4 mr-1" />
+                    <div className="flex items-center text-xs sm:text-sm text-gray-600 mb-2">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       {formatDate(announcement.startDate)}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-teal-600">
+                      <span className="text-xs sm:text-sm font-medium text-teal-600">
                         {announcement.isFree ? 'Gratuit' : `${announcement.cost} XAF`}
                       </span>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Eye className="h-4 w-4 mr-1" />
+                      <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         {announcement.viewsCount}
                       </div>
                     </div>
@@ -1693,21 +1692,20 @@ const getInitials = (name: string) => {
             </div>
           )}
 
-          <div className="text-center mt-8">
-            <Link href="/annonces" className="inline-flex items-center px-6 py-3 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all">
+          <div className="text-center mt-6 sm:mt-8">
+            <Link href="/annonces" className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all text-sm sm:text-base">
               Voir toutes les annonces
             </Link>
           </div>
         </div>
       </section>
 
-{/* section categories  */}
-{/* Catégories Populaires Section */}
-<section ref={categoriesRef} className="py-20 bg-linear-to-br from-gray-50 to-white">
+{/* section categories - CORRIGÉ POUR LE RESPONSIVE */}
+<section ref={categoriesRef} className="py-12 sm:py-16 lg:py-20 bg-linear-to-br from-gray-50 to-white">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-12">
-      <h2 className="text-3xl font-bold text-gray-900 mb-4">Explorez par catégorie</h2>
-      <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+    <div className="text-center mb-8 sm:mb-12">
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Explorez par catégorie</h2>
+      <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
         Découvrez nos campagnes de santé organisées par catégorie pour trouver facilement ce qui vous intéresse
       </p>
     </div>
@@ -1717,43 +1715,43 @@ const getInitials = (name: string) => {
         <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
       </div>
     ) : (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
         {Array.isArray(categoriesData?.data) && categoriesData?.data.slice(0, 10).map((category) => (
           <motion.div
             key={category.id}
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="group relative bg-white border border-gray-200 rounded-2xl p-6 cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+            className="group relative bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
           >
             {/* Arrière-plan dégradé au survol */}
             <div className={`absolute inset-0 bg-linear-to-br ${getCategoryColor(category.name)} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
             
             <div className="relative z-10 flex flex-col items-center text-center">
               {/* Conteneur de l'icône */}
-              <div className={`w-20 h-20 bg-linear-to-br ${getCategoryColor(category.name)} rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg group-hover:shadow-2xl transition-shadow`}>
-                <span className="text-4xl">{getCategoryIcon(category)}</span>
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br ${getCategoryColor(category.name)} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-white shadow-lg group-hover:shadow-2xl transition-shadow`}>
+                <span className="text-3xl sm:text-4xl">{getCategoryIcon(category)}</span>
               </div>
               
               {/* Nom de la catégorie */}
-              <h3 className="font-bold text-gray-900 mb-2 text-lg">{category.name}</h3>
+              <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base lg:text-lg">{category.name}</h3>
               
               {/* Nombre de campagnes */}
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-xs sm:text-sm text-gray-500">
                 <span className="font-medium text-teal-600">{category.announcementsCount}</span>
                 <span className="mx-1">•</span>
                 <span>campagnes</span>
               </div>
               
               {/* Description de la catégorie */}
-              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{category.description}</p>
+              <p className="text-xs text-gray-500 mt-1 line-clamp-2 hidden sm:block">{category.description}</p>
             </div>
           </motion.div>
         ))}
       </div>
     )}
     
-    <div className="text-center mt-12">
-      <Link href="/categories" className="inline-flex items-center px-6 py-3 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all">
+    <div className="text-center mt-8 sm:mt-12">
+      <Link href="/categories" className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 text-white font-medium rounded-full hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700 transition-all text-sm sm:text-base">
         Voir toutes les catégories
       </Link>
     </div>
@@ -1761,12 +1759,12 @@ const getInitials = (name: string) => {
 </section>
 
 
-      {/* Articles de Santé Section */}
-      <section ref={articlesRef} className="py-20 bg-gray-50">
+      {/* Articles de Santé Section - CORRIGÉ POUR LE RESPONSIVE */}
+      <section ref={articlesRef} className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Articles de santé récents</h2>
-            <Link href="/articles" className="text-teal-600 hover:text-teal-700 font-medium flex items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Articles de santé récents</h2>
+            <Link href="/articles" className="text-teal-600 hover:text-teal-700 font-medium flex items-center text-sm sm:text-base whitespace-nowrap">
               Voir tous <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
@@ -1776,7 +1774,7 @@ const getInitials = (name: string) => {
               <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
             </div>
           ) : !Array.isArray(articlesData?.data) || articlesData?.data.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+            <div className="bg-white rounded-2xl shadow-md p-8 sm:p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Activity className="h-8 w-8 text-gray-400" />
               </div>
@@ -1787,46 +1785,46 @@ const getInitials = (name: string) => {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {articlesData?.data.map((article) => (
                 <motion.div
                   key={article.id}
                   whileHover={{ y: -5 }}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                  className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                 >
                   <div className="relative">
                     <img
                       src={getCloudinaryImageUrl(article.featuredImage, { width: 400, height: 225, crop: 'fill' })}
                       alt={article.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-40 sm:h-48 object-cover"
                     />
                     <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded-full">
                       {article.category?.name}
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{article.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{article.excerpt}</p>
-                    <div className="flex items-center text-sm text-gray-500 mb-4">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full mr-2"></div>
+                  <div className="p-4 sm:p-6">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">{article.title}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3 text-sm sm:text-base">{article.excerpt}</p>
+                    <div className="flex flex-wrap items-center text-xs sm:text-sm text-gray-500 mb-4 gap-x-2 gap-y-1">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full mr-1"></div>
                       <span>{article.author}</span>
-                      <span className="mx-2">•</span>
+                      <span className="mx-1">•</span>
                       <span>{formatDate(article.publishedAt || article.createdAt)}</span>
-                      <span className="mx-2">•</span>
+                      <span className="mx-1">•</span>
                       <span>{article.readingTime || calculateReadingTime(article.content)} min</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
                         <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           {article.viewsCount}
                         </div>
                         <div className="flex items-center">
-                          <MessageCircle className="h-4 w-4 mr-1" />
+                          <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           {article.commentsCount}
                         </div>
                         <div className="flex items-center">
-                          <Heart className="h-4 w-4 mr-1" />
+                          <Heart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           {article.reactionsCount}
                         </div>
                       </div>
@@ -1839,13 +1837,12 @@ const getInitials = (name: string) => {
         </div>
       </section>
 
-      {/* Carte Interactive Section */}
-      {/* Carte Interactive Section */}
-      <section ref={mapRef} className="py-20 bg-white">
+      {/* Carte Interactive Section - CORRIGÉ POUR LE RESPONSIVE */}
+      <section ref={mapRef} className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Trouvez un hôpital près de chez vous</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Trouvez un hôpital près de chez vous</h2>
 
-          <div className="relative bg-gray-100 rounded-2xl overflow-hidden shadow-lg" style={{ height: '500px' }}>
+          <div className="relative bg-gray-100 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg" style={{ height: '400px', minHeight: '300px' }}>
             <LeafletMap hospitals={mockHospitals} />
                   
             {/* Filtres */}
@@ -1864,42 +1861,41 @@ const getInitials = (name: string) => {
             </div>
 
             {/* Barre de recherche */}
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 right-20 sm:right-auto sm:left-4 z-10">
               <div className="bg-white rounded-lg shadow-md p-2 flex">
                 <input
                   type="text"
                   placeholder="Rechercher une ville..."
-                  className="px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="px-3 sm:px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm sm:text-base flex-1"
                 />
-                <button className="px-4 py-2 bg-teal-600 text-white rounded-r-lg hover:bg-teal-700 transition-colors">
-                  <Search className="h-5 w-5" />
+                <button className="px-3 sm:px-4 py-2 bg-teal-600 text-white rounded-r-lg hover:bg-teal-700 transition-colors">
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
             </div>
 
             {/* Bouton de localisation */}
             <div className="absolute bottom-4 right-4 z-10">
-              <button className="p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow">
-                <MapPin className="h-5 w-5 text-teal-600" />
+              <button className="p-2 sm:p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow" aria-label="Ma position">
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
               </button>
             </div>
           </div>
 
-          <div className="text-center mt-8">
-            <Link href="/hopitals" className="inline-flex items-center px-6 py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors">
+          <div className="text-center mt-6 sm:mt-8">
+            <Link href="/hopitals" className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors text-sm sm:text-base">
               Voir tous les hôpitaux
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Témoignages Section */}
-     {/* Témoignages Section */}
-      <section ref={testimonialsRef} className="py-20 bg-linear-to-br from-gray-50 to-white">
+      {/* Témoignages Section - CORRIGÉ POUR LE RESPONSIVE */}
+      <section ref={testimonialsRef} className="py-12 sm:py-16 lg:py-20 bg-linear-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Ce qu&apos;ils disent de nous</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Ce qu&apos;ils disent de nous</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {[
               { 
                 name: "Marie K.", 
@@ -1917,23 +1913,23 @@ const getInitials = (name: string) => {
                 text: "Application très utile pour trouver un hôpital près de chez moi!" 
               }
             ].map((testimonial, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg p-6">
+              <div key={index} className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
                 <div className="flex items-center mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-5 w-5 text-yellow-400 fill-current" />
+                    <Star key={star} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 italic">
+                <p className="text-gray-700 mb-6 italic text-sm sm:text-base">
                   {testimonial.text}
                 </p>
                 <div className="flex items-center">
                   {/* Avatar avec initiales */}
-                  <div className={`w-12 h-12 ${getAvatarColor(testimonial.name)} rounded-full flex items-center justify-center text-white font-semibold mr-4`}>
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 ${getAvatarColor(testimonial.name)} rounded-full flex items-center justify-center text-white font-semibold mr-3 sm:mr-4 text-sm sm:text-base`}>
                     {getInitials(testimonial.name)}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.city}</p>
+                    <p className="font-semibold text-gray-900 text-sm sm:text-base">{testimonial.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">{testimonial.city}</p>
                   </div>
                 </div>
               </div>
@@ -1942,35 +1938,35 @@ const getInitials = (name: string) => {
         </div>
       </section>
 
-      {/* Newsletter Section (CTA) */}
-      <section ref={newsletterRef} className="py-20 bg-linear-to-br from-teal-600 to-teal-800">
+      {/* Newsletter Section (CTA) - CORRIGÉ POUR LE RESPONSIVE */}
+      <section ref={newsletterRef} className="py-12 sm:py-16 lg:py-20 bg-linear-to-br from-teal-600 to-teal-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 md:p-12 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Mail className="h-10 w-10 text-white" />
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 text-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Restez informé des dernières campagnes</h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">Restez informé des dernières campagnes</h2>
+            <p className="text-lg sm:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Inscrivez-vous à notre newsletter pour recevoir les alertes de santé directement dans votre boîte mail
             </p>
 
-            <form onSubmit={newsletterForm.handleSubmit(handleNewsletterSubmit)} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form onSubmit={newsletterForm.handleSubmit(handleNewsletterSubmit)} className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-md mx-auto">
               <input
                 type="email"
                 {...newsletterForm.register('email')}
                 placeholder="Votre adresse email..."
-                className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm sm:text-base"
               />
               <button
                 type="submit"
                 disabled={isSubscribing}
-                className="px-6 py-3 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+                className="px-4 sm:px-6 py-3 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
               >
                 {isSubscribing ? <Loader2 className="h-5 w-5 animate-spin" /> : 'S\'inscrire'}
               </button>
             </form>
 
-            <div className="flex justify-center mt-6 space-x-6 text-sm text-white/80">
+            <div className="flex justify-center mt-6 space-x-4 sm:space-x-6 text-sm text-white/80">
               <div className="flex items-center">
                 <span className="mr-2">✓</span> Gratuit
               </div>
@@ -1985,33 +1981,33 @@ const getInitials = (name: string) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      {/* Footer - CORRIGÉ POUR LE RESPONSIVE */}
+      <footer className="bg-gray-900 text-white py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {/* Column 1 - Logo */}
-            <div>
+            <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center mb-4">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-500 rounded-full blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
                   <div className="relative bg-white p-2 rounded-full shadow-2xl">
-                    <Activity className="w-6 h-6 text-teal-600" strokeWidth={2.5} />
+                    <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" strokeWidth={2.5} />
                   </div>
                 </div>
-                <span className="ml-2 text-xl font-semibold">Info santé Cameroun</span>
+                <span className="ml-2 text-lg sm:text-xl font-semibold">Info santé Cameroun</span>
               </div>
-              <p className="text-gray-400 mb-4">Votre santé, notre priorité 🇨🇲</p>
+              <p className="text-gray-400 mb-4 text-sm sm:text-base">Votre santé, notre priorité 🇨🇲</p>
             </div>
 
             {/* Column 2 - Navigation */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Navigation</h3>
               <ul className="space-y-2">
-                <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Accueil</Link></li>
-                <li><Link href="/campagnes" className="text-gray-400 hover:text-white transition-colors">Campagnes</Link></li>
-                <li><Link href="/articles" className="text-gray-400 hover:text-white transition-colors">Articles</Link></li>
-                <li><Link href="/carte" className="text-gray-400 hover:text-white transition-colors">Carte</Link></li>
-                <li><Link href="/hopitaux" className="text-gray-400 hover:text-white transition-colors">Hôpitaux</Link></li>
+                <li><Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Accueil</Link></li>
+                <li><Link href="/campagnes" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Campagnes</Link></li>
+                <li><Link href="/articles" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Articles</Link></li>
+                <li><Link href="/carte" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Carte</Link></li>
+                <li><Link href="/hopitaux" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Hôpitaux</Link></li>
               </ul>
             </div>
 
@@ -2019,11 +2015,11 @@ const getInitials = (name: string) => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Ressources</h3>
               <ul className="space-y-2">
-                <li><Link href="/a-propos" className="text-gray-400 hover:text-white transition-colors">À propos</Link></li>
-                <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link href="/cgu" className="text-gray-400 hover:text-white transition-colors">CGU</Link></li>
-                <li><Link href="/confidentialite" className="text-gray-400 hover:text-white transition-colors">Confidentialité</Link></li>
-                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
+                <li><Link href="/a-propos" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">À propos</Link></li>
+                <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">FAQ</Link></li>
+                <li><Link href="/cgu" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">CGU</Link></li>
+                <li><Link href="/confidentialite" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Confidentialité</Link></li>
+                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Contact</Link></li>
               </ul>
             </div>
 
@@ -2032,37 +2028,37 @@ const getInitials = (name: string) => {
               <h3 className="text-lg font-semibold mb-4">Contact</h3>
               <div className="space-y-2">
                 <div className="flex items-center text-gray-400">
-                  <Mail className="h-5 w-5 mr-2" />
-                  <span>contact@healthinfo.cm</span>
+                  <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">contact@healthinfo.cm</span>
                 </div>
                 <div className="flex items-center text-gray-400">
-                  <Phone className="h-5 w-5 mr-2" />
-                  <span>+237 656 446 611/ +237 682 470 529</span>
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">+237 656 446 611/ +237 682 470 529</span>
                 </div>
                 <div className="flex items-center text-gray-400">
-                  <MapPin className="h-5 w-5 mr-2" />
-                  <span>Douala, Cameroun</span>
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">Douala, Cameroun</span>
                 </div>
               </div>
 
               <div className="mt-6">
                 <h4 className="text-sm font-semibold mb-2">Suivez-nous</h4>
-                <div className="flex space-x-4">
+                <div className="flex space-x-3 sm:space-x-4">
                   <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <Facebook className="h-5 w-5" />
+                    <Facebook className="h-4 w-4 sm:h-5 sm:w-5" />
                   </a>
                   <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <Twitter className="h-5 w-5" />
+                    <Twitter className="h-4 w-4 sm:h-5 sm:w-5" />
                   </a>
                   <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <Instagram className="h-5 w-5" />
+                    <Instagram className="h-4 w-4 sm:h-5 sm:w-5" />
                   </a>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400 text-sm">
+          <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-400 text-sm">
             <p>© 2025 Health Info Cameroun. Tous droits réservés.</p>
             <p>Fait avec ❤️ au Cameroun</p>
           </div>
