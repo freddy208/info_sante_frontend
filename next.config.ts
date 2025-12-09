@@ -3,20 +3,20 @@ import type { NextConfig } from 'next';
 import path from 'path';
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  // La ligne turbopack: {} a été supprimée
   outputFileTracingRoot: path.join(__dirname, '../../'), 
- images: {
-  remotePatterns: [
-    {
-      protocol: 'https',
-      hostname: 'images.unsplash.com',
-    },
-    {
-      protocol: 'https',
-      hostname: 'res.cloudinary.com',
-    },
-  ],
-},
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
+  },
 };
 
 export default withPWA({
