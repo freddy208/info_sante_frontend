@@ -58,6 +58,7 @@ import { ArticleStatus } from '@/types/article';
 import { Category } from '@/types/category';
 import 'leaflet/dist/leaflet.css';
 import dynamic from 'next/dynamic';
+import { OrganizationType } from '@/types';
 
 // Import dynamique de Leaflet pour éviter les erreurs de SSR
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
@@ -866,13 +867,8 @@ const mockArticles = [
     }
   }
 ];
+export { OrganizationType } from '@/types';
 
-export enum OrganizationType {
-  PUBLIC = 'PUBLIC',
-  PRIVATE = 'PRIVATE',
-  NGO = 'NGO',
-  // ... autres types si nécessaire
-}
  // Données mock pour les hôpitaux au Cameroun
 // MODIFIÉ : La structure est maintenant plate pour correspondre au type 'Organization'
 // Données mock pour les hôpitaux au Cameroun

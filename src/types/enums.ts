@@ -10,3 +10,11 @@ export enum Gender {
   FEMALE = "FEMALE",
   OTHER = "OTHER",
 }
+
+
+export enum OrganizationType {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  NGO = 'NGO',
+  // ... autres types si nécessaire
+}
