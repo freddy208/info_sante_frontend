@@ -867,7 +867,6 @@ const mockArticles = [
     }
   }
 ];
-export { OrganizationType } from '@/types';
 
  // Données mock pour les hôpitaux au Cameroun
 // MODIFIÉ : La structure est maintenant plate pour correspondre au type 'Organization'
