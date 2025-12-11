@@ -2,9 +2,12 @@
 // Enums basés sur le schéma Prisma
 export enum OrganizationType {
   HOSPITAL_PUBLIC = 'HOSPITAL_PUBLIC',
+  PUBLIC = 'PUBLIC',
   HOSPITAL_PRIVATE = 'HOSPITAL_PRIVATE',
+  PRIVATE = 'PRIVATE',
   CLINIC = 'CLINIC',
   HEALTH_CENTER = 'HEALTH_CENTER',
+   HEALTH_DISTRICT = 'HEALTH_DISTRICT',
   DISPENSARY = 'DISPENSARY',
   MINISTRY = 'MINISTRY',
   NGO = 'NGO',
@@ -159,4 +162,33 @@ export interface PaginatedOrganizationsResponse {
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
+}
+
+
+export interface Hospital {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  region: string;
+  country: string;
+  logo: string;
+  type: OrganizationType;
+  specialties: string[];
+  website: string | null;
+  isActive: boolean;
+  isVerified: boolean;
+  latitude: number;
+  longitude: number;
+  rating: number;
+  totalReviews: number;
+  registrationNumber: string;
+  emergencyAvailable: boolean;
+  insuranceAccepted: string[];
+  openingHours: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

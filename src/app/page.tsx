@@ -1,10 +1,11 @@
+/* eslint-disable react-hooks/immutability */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable react-hooks/set-state-in-effect */
 
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import { Heart, Shield, Activity, Sparkles, ArrowRight, Zap, Users, MapPin, Search, Clock, Star, TrendingUp, Award, Bell, Calendar, Phone, FileText, ChevronRight, Stethoscope, Briefcase, Hospital } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Heart, Shield, Activity, Sparkles, ArrowRight, Zap, Users, MapPin, Search, Clock, Star, TrendingUp, Award, Bell, Calendar, Phone, FileText, ChevronRight, Stethoscope, Briefcase, Hospital, User, UserPlus, Building2 } from 'lucide-react';
 import { useRouter } from "next/navigation";
 
 export default function InfoSanteOnboarding() {
@@ -21,6 +22,8 @@ export default function InfoSanteOnboarding() {
     delay: number;
     duration: number;
   }>>([]);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -44,6 +47,32 @@ export default function InfoSanteOnboarding() {
       window.removeEventListener('resize', checkMobile);
     };
   }, [isMobile]);
+
+  // Carousel auto-play
+  useEffect(() => {
+    if (autoPlay) {
+      intervalRef.current = setInterval(() => {
+        setCurrentStep((prevStep) => (prevStep + 1) % steps.length);
+      }, 5000); // Change d'image toutes les 5 secondes
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [autoPlay]);
+
+  // Pause auto-play when user interacts with carousel
+  const handleCarouselInteraction = () => {
+    setAutoPlay(false);
+    // Restart auto-play after 10 seconds of inactivity
+    setTimeout(() => setAutoPlay(true), 10000);
+  };
 
   // Générer des particules magiques lors du changement d'étape
   useEffect(() => {
@@ -121,21 +150,33 @@ export default function InfoSanteOnboarding() {
       ]
     }
   ];
+
   const router = useRouter();
 
+  const nextStep = () => {
+    handleCarouselInteraction();
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      router.push("/auth/inscription");
+    }
+  };
 
-const nextStep = () => {
-  if (currentStep < steps.length - 1) {
-    setCurrentStep(currentStep + 1);
-  } else {
-    router.push("/auth/inscription");
-  }
-};
+  const prevStep = () => {
+    handleCarouselInteraction();
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
-const skipOnboarding = () => {
-  router.push("/accueil");
-};
+  const goToStep = (index: number) => {
+    handleCarouselInteraction();
+    setCurrentStep(index);
+  };
 
+  const skipOnboarding = () => {
+    router.push("/accueil");
+  };
 
   const currentStepData = steps[currentStep];
   const Icon = currentStepData.icon;
@@ -228,8 +269,8 @@ const skipOnboarding = () => {
         }
       `}</style>
 
-      <div className="relative z-10 min-h-screen flex flex-col pt-4 sm:pt-0">
-        {/* Header with skip button - FIX: Bouton visible sur mobile */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header with skip button */}
         <div className="fixed top-4 right-4 z-50 sm:absolute sm:top-6 sm:right-6">
           <button
             onClick={skipOnboarding}
@@ -239,68 +280,70 @@ const skipOnboarding = () => {
           </button>
         </div>
 
-        {/* Progress indicators */}
-        <div className="pt-16 sm:pt-8 px-4">
-          <div className="max-w-md mx-auto flex gap-2 sm:gap-3">
-            {steps.map((step, index) => (
-              <div
-                key={index}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${
-                  index <= currentStep
-                    ? `bg-gradient-to-r ${step.gradient} shadow-md`
-                    : 'bg-gray-200'
-                }`}
-                style={{
-                  transform: index === currentStep ? 'scaleY(1.5)' : 'scaleY(1)',
-                  transition: 'all 0.5s ease-out'
-                }}
-              />
-            ))}
-          </div>
-          <p className="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3 font-medium animate-pulse">
-            Étape {currentStep + 1} sur {steps.length}
-          </p>
-        </div>
-
         {/* Main content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-8">
           <div className={`max-w-6xl w-full transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             
-            <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
-              {/* Left side - Content */}
-              <div className="order-2 lg:order-1">
-                {/* Icon badge */}
-                <div className="inline-flex mb-4 sm:mb-6">
-                  <div className="relative group">
-                    <div 
-                      className={`absolute inset-0 bg-gradient-to-r ${currentStepData.gradient} rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity`}
-                      style={{ animation: 'glow 3s ease-in-out infinite' }}
-                    />
-                    <div 
-                      className="relative bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-gray-100"
-                      style={{ animation: 'float 3s ease-in-out infinite' }}
-                    >
-                      <Icon className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r ${currentStepData.gradient} bg-clip-text text-transparent`} strokeWidth={2} />
+            {/* Carousel with auto-play */}
+            <div className="relative mb-8 sm:mb-12">
+              <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl">
+                <div 
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${currentStep * 100}%)` }}
+                >
+                  {steps.map((step, index) => (
+                    <div key={index} className="w-full flex-shrink-0">
+                      <div className="relative">
+                        <img 
+                          src={step.image}
+                          alt={step.title}
+                          className="w-full h-[250px] sm:h-[350px] md:h-[400px] lg:h-[500px] object-cover"
+                        />
+                        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent`} />
+                        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
+                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{step.title}</h2>
+                          <p className="text-lg sm:text-xl opacity-90">{step.subtitle}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-
-                {/* Title section - FIX: Texte responsive */}
-                <div className="mb-6 sm:mb-8">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-2 sm:mb-3 leading-tight">
-                    {currentStepData.title}
-                  </h1>
-                  <p className={`text-xl sm:text-2xl md:text-3xl font-semibold bg-gradient-to-r ${currentStepData.gradient} bg-clip-text text-transparent mb-3 sm:mb-4`}>
-                    {currentStepData.subtitle}
-                  </p>
-                  <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
-                    {currentStepData.description}
-                  </p>
+                
+                {/* Carousel navigation dots */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                  {steps.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToStep(index)}
+                      className={`w-3 h-3 rounded-full transition-all ${
+                        index === currentStep ? 'bg-white w-8' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
                 </div>
+                
+                {/* Carousel navigation arrows */}
+                <button
+                  onClick={prevStep}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white rotate-180" />
+                </button>
+                <button
+                  onClick={nextStep}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </button>
+              </div>
+            </div>
 
-                {/* Features list */}
-                <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
-                  {currentStepData.features.map((feature, index) => {
+            {/* Features list */}
+            <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Découvrez nos fonctionnalités</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  {currentStepData.features.slice(0, 2).map((feature, index) => {
                     const FeatureIcon = feature.icon;
                     const isHovered = hoveredFeature === index;
                     return (
@@ -334,59 +377,124 @@ const skipOnboarding = () => {
                     );
                   })}
                 </div>
-
-                {/* CTA buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button
-                    onClick={nextStep}
-                    className={`group relative px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r ${currentStepData.gradient} hover:shadow-2xl text-white text-lg sm:text-xl font-bold rounded-xl sm:rounded-2xl shadow-xl transition-all hover:scale-110 inline-flex items-center justify-center gap-2 sm:gap-3 overflow-hidden`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/40 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping opacity-0 group-hover:opacity-100" style={{ animationDuration: '1.5s' }} />
-                    
-                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform relative z-10" />
-                    <span className="relative z-10">
-                      {currentStep < steps.length - 1 ? 'Continuer' : 'Commencer'}
-                    </span>
-                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-2 transition-transform relative z-10" />
-                  </button>
-
-                  {currentStep > 0 && (
-                    <button
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      className="px-6 sm:px-8 py-4 sm:py-5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl sm:rounded-2xl font-bold transition-all hover:scale-105 border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl text-base sm:text-lg"
-                    >
-                      Retour
-                    </button>
-                  )}
+              </div>
+              
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Pourquoi nous choisir</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  {currentStepData.features.slice(2).map((feature, index) => {
+                    const FeatureIcon = feature.icon;
+                    const isHovered = hoveredFeature === index + 2;
+                    return (
+                      <div
+                        key={index + 2}
+                        onMouseEnter={() => setHoveredFeature(index + 2)}
+                        onMouseLeave={() => setHoveredFeature(null)}
+                        className="group bg-white hover:bg-gradient-to-r hover:from-white hover:to-teal-50/30 rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all hover:scale-105 hover:shadow-2xl cursor-pointer border border-gray-100 hover:border-teal-200 relative overflow-hidden"
+                        style={{ 
+                          animationDelay: `${(index + 2) * 100}ms`,
+                          transform: isHovered ? 'translateX(8px)' : 'translateX(0)',
+                          transition: 'all 0.3s ease-out'
+                        }}
+                      >
+                        {isHovered && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-teal-100/30 to-transparent animate-pulse" />
+                        )}
+                        
+                        <div className="flex items-center gap-3 sm:gap-4 relative z-10">
+                          <div className={`${getColorClasses(feature.color)} p-2.5 sm:p-3 rounded-xl shadow-md group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0`}>
+                            <FeatureIcon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-800 font-semibold text-base sm:text-lg">{feature.text}</p>
+                          </div>
+                          <div className="text-2xl sm:text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0">
+                            {feature.emoji}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
 
-              {/* Right side - Image - FIX: Hauteur responsive + 3D désactivé sur mobile */}
-              <div className="order-1 lg:order-2">
-                <div className="relative group">
-                  <div className={`absolute -inset-4 bg-gradient-to-r ${currentStepData.gradient} rounded-2xl sm:rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition-all duration-500`} />
-                  <div 
-                    className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-gray-100 transform transition-transform duration-500 group-hover:scale-105"
-                    style={!isMobile ? {
-                      transform: `perspective(1000px) rotateY(${(mousePosition.x - 0.5) * 5}deg) rotateX(${(mousePosition.y - 0.5) * -5}deg)`
-                    } : {}}
-                  >
-                    <img 
-                      src={currentStepData.image}
-                      alt={currentStepData.title}
-                      className="w-full h-[250px] sm:h-[350px] md:h-[400px] lg:h-[500px] object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-br ${currentStepData.gradient} opacity-10 group-hover:opacity-5 transition-opacity`} />
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent transform -translate-y-full group-hover:translate-y-full transition-transform duration-1000" />
+            {/* Three CTAs for different user types */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">Rejoignez-nous selon votre profil</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                {/* CTA for anonymous/guest users */}
+                <button
+                  onClick={() => router.push("/accueil")}
+                  className="group relative bg-gradient-to-br from-blue-50 to-indigo-100 hover:from-blue-100 hover:to-indigo-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:scale-105 hover:shadow-xl border border-blue-200 hover:border-blue-300"
+                >
+                  <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+                    <div className="bg-blue-500 text-white p-3 sm:p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                      <User className="w-6 h-6 sm:w-8 sm:h-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg sm:text-xl">Explorer en tant qu&apos;invité</h4>
+                      <p className="text-gray-600 text-sm sm:text-base mt-1">Découvrez nos services sans inscription</p>
+                    </div>
+                    <div className="flex items-center text-blue-600 font-semibold group-hover:text-blue-700 transition-colors">
+                      <span>Commencer</span>
+                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
+                </button>
+
+                {/* CTA for registered users */}
+                <button
+                  onClick={() => router.push("/auth/connexion")}
+                  className="group relative bg-gradient-to-br from-emerald-50 to-teal-100 hover:from-emerald-100 hover:to-teal-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:scale-105 hover:shadow-xl border border-emerald-200 hover:border-emerald-300"
+                >
+                  <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+                    <div className="bg-emerald-500 text-white p-3 sm:p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                      <UserPlus className="w-6 h-6 sm:w-8 sm:h-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg sm:text-xl">Espace utilisateur</h4>
+                      <p className="text-gray-600 text-sm sm:text-base mt-1">Accédez à votre compte personnel</p>
+                    </div>
+                    <div className="flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700 transition-colors">
+                      <span>Se connecter</span>
+                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </button>
+
+                {/* CTA for hospitals */}
+                <button
+                  onClick={() => router.push("/hopitals/dashboard")}
+                  className="group relative bg-gradient-to-br from-purple-50 to-pink-100 hover:from-purple-100 hover:to-pink-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:scale-105 hover:shadow-xl border border-purple-200 hover:border-purple-300"
+                >
+                  <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+                    <div className="bg-purple-500 text-white p-3 sm:p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                      <Building2 className="w-6 h-6 sm:w-8 sm:h-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg sm:text-xl">Espace hôpitaux</h4>
+                      <p className="text-gray-600 text-sm sm:text-base mt-1">Gérez votre établissement</p>
+                    </div>
+                    <div className="flex items-center text-purple-600 font-semibold group-hover:text-purple-700 transition-colors">
+                      <span>Accéder</span>
+                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </button>
               </div>
+            </div>
+
+            {/* Description section */}
+            <div className="text-center mb-8 sm:mb-12">
+              <p className="text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto">
+                {currentStepData.description}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Footer - FIX: Meilleur responsive */}
+        {/* Footer */}
         <div className="py-6 sm:py-8 bg-white/50 backdrop-blur-sm border-t border-gray-200">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center md:justify-between gap-3 sm:gap-4 text-center md:text-left">

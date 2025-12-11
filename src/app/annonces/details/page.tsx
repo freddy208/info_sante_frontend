@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -51,6 +52,9 @@ import { toast } from 'react-hot-toast';
 import { getCloudinaryImageUrl } from '@/lib/cloudinary';
 import { AnnouncementStatus, TargetAudience } from '@/types/announcement';
 import { Category } from '@/types/category';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import dynamic from 'next/dynamic';
 
 // Données mock pour l'annonce
 const mockAnnouncement = {
@@ -306,6 +310,87 @@ const mockSimilarCampaigns = [
     }
   },
 ];
+
+//cofiguration pour la carte 
+// On importe les composants de manière dynamique avec ssr: false
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { 
+  ssr: false,
+  // On peut ajouter un composant de chargement pendant que le vrai composant se charge côté client
+  loading: () => (
+    <div className="w-full h-48 sm:h-64 bg-gray-200 rounded-xl flex items-center justify-center">
+      <div className="text-center">
+        <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+        <p className="text-gray-500">Chargement de la carte...</p>
+      </div>
+    </div>
+  )
+});
+
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+
+// La configuration des icônes Leaflet doit aussi se faire côté client
+const setupLeafletIcons = () => {
+  // On vérifie qu'on est bien dans le navigateur
+  if (typeof window !== 'undefined') {
+    const L = require('leaflet');
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }
+};
+
+// Composant pour la carte interactive avec Leaflet
+function InteractiveMap({ location, organizationName }: { location: any; organizationName: string }) {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+    setupLeafletIcons();
+  }, []);
+  
+  if (!isClient) {
+    // Ce placeholder est maintenant géré par la prop `loading` de l'import dynamique, mais on peut le laisser en sécurité
+    return (
+      <div className="w-full h-48 sm:h-64 bg-gray-200 rounded-xl flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-500">Chargement de la carte...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    // Le conteneur parent doit avoir une hauteur définie pour éviter les erreurs de taille
+    <div className="w-full h-48 sm:h-64 md:h-80">
+      <MapContainer
+        center={[location.latitude, location.longitude]}
+        zoom={15}
+        style={{ height: '100%', width: '100%' }}
+        className="rounded-xl"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={[location.latitude, location.longitude]}>
+          <Popup>
+            <div className="p-2">
+              <h3 className="font-semibold text-gray-900">{organizationName}</h3>
+              <p className="text-sm text-gray-600">{location.address}</p>
+              <p className="text-sm text-gray-600">{location.city}, {location.region}</p>
+            </div>
+          </Popup>
+        </Marker>
+      </MapContainer>
+    </div>
+  );
+}
 
 // Composant pour la section d'image hero
 function HeroImageSection({ 
@@ -699,30 +784,22 @@ function ContentSection({
               <span className="text-sm text-gray-600">{announcement.organization.phone}</span>
             </div>
           </div>
-          
           <div className="rounded-xl overflow-hidden shadow-md mb-4">
-            <div className="relative h-48 sm:h-64 bg-gray-100">
-              {/* Carte statique avec OpenStreetMap (gratuit et sans clé API) */}
-              <img 
-                src={`https://staticmap.openstreetmap.de/staticmap.php?center=${announcement.location.latitude},${announcement.location.longitude}&zoom=15&size=600x400&maptype=mapnik&markers=${announcement.location.latitude},${announcement.location.longitude},red`}
-                alt="Carte de localisation"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback si l'image de la carte ne charge pas
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
-                }}
-              />
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-              
-              <div className="absolute bottom-4 left-4 bg-white rounded-lg p-2 shadow-md">
-                <p className="text-sm font-medium text-gray-900 flex items-center">
-                  <MapPin className="h-4 w-4 mr-1 text-blue-600" />
-                  {announcement.location.city}, {announcement.location.region}
-                </p>
-              </div>
+          <div className="relative h-48 sm:h-64 bg-gray-100">
+            {/* Carte interactive avec Leaflet */}
+            <InteractiveMap 
+              location={announcement.location} 
+              organizationName={announcement.organization.name} 
+            />
+            
+            <div className="absolute bottom-4 left-4 bg-white rounded-lg p-2 shadow-md">
+              <p className="text-sm font-medium text-gray-900 flex items-center">
+                <MapPin className="h-4 w-4 mr-1 text-blue-600" />
+                {announcement.location.city}, {announcement.location.region}
+              </p>
             </div>
           </div>
+        </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
             <button className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center">

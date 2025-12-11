@@ -6,46 +6,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
-import { MapPin, Phone, Star, Clock, Filter, Search, X, ChevronDown, Grid3x3, List, Heart, Navigation, Plus, Minus, Target, Shield, CheckCircle, Users, Calendar, Activity, TrendingUp, Award, ChevronUp } from 'lucide-react';
+import { MapPin, Phone, Star, Clock, Filter, Search, X, ChevronDown, Grid3x3, List, Heart, Navigation, Plus, Minus, Target, Shield, CheckCircle, Users, Calendar, Activity, TrendingUp, Award, ChevronUp, Stethoscope, Eye, Globe, RefreshCw } from 'lucide-react';
 import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
+import { Hospital, OrganizationType } from '@/types/organization';
 
-// Types pour les données
-enum OrganizationType {
-  PUBLIC = 'PUBLIC',
-  PRIVATE = 'PRIVATE',
-  CLINIC = 'CLINIC',
-  HEALTH_CENTER = 'HEALTH_CENTER',
-  NGO = 'NGO',
-  HEALTH_DISTRICT = 'HEALTH_DISTRICT'
-}
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-interface Hospital {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  region: string;
-  country: string;
-  logo: string;
-  type: OrganizationType;
-  specialties: string[];
-  website: string | null;
-  isActive: boolean;
-  isVerified: boolean;
-  latitude: number;
-  longitude: number;
-  rating: number;
-  totalReviews: number;
-  registrationNumber: string;
-  emergencyAvailable: boolean;
-  insuranceAccepted: string[];
-  openingHours: string;
-  description: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import dynamic from 'next/dynamic';
+
 
 // Données mock
 const mockHospitals: Hospital[] = [
@@ -267,7 +236,7 @@ const mockHospitals: Hospital[] = [
   }
 ];
 
-// --- COMPOSANTS SUR MESURE ---
+/// --- COMPOSANTS SUR MESURE ---
 
 // Composant Dropdown personnalisé et moderne
 interface CustomDropdownProps {
@@ -297,16 +266,16 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, option
     <div ref={dropdownRef} className="relative w-full sm:w-auto">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 backdrop-blur-sm"
       >
         <div className="flex items-center">
-          {icon && <span className="mr-2 text-gray-400">{icon}</span>}
+          {icon && <span className="mr-2 text-blue-500">{icon}</span>}
           <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-20 w-full mt-2 bg-white/95 backdrop-blur-lg border border-gray-200 rounded-xl shadow-xl overflow-hidden">
           {options.map((option) => (
             <button
               key={option.value}
@@ -314,12 +283,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, option
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-gray-50 transition-colors duration-150 ${
-                value === option.value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 ${
+                value === option.value ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-medium border-l-4 border-blue-500' : 'text-gray-700'
               }`}
             >
               <span>{option.label}</span>
-              {option.count !== undefined && <span className="text-xs text-gray-400">({option.count})</span>}
+              {option.count !== undefined && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">({option.count})</span>}
             </button>
           ))}
         </div>
@@ -354,28 +323,36 @@ const FilterPanel: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-500">
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 backdrop-blur-sm">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 text-left"
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300"
       >
-        <h3 className="font-semibold text-gray-900">Filtres avancés</h3>
+        <div className="flex items-center">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg mr-3">
+            <Filter className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="font-bold text-gray-900">Filtres avancés</h3>
+        </div>
         <ChevronUp className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
       
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-6 border-t border-gray-100">
+        <div className="px-5 pb-5 space-y-6 border-t border-gray-100">
           {/* Filtre par Ville */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Ville</h4>
+            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
+              <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+              Ville
+            </h4>
             <div className="flex flex-wrap gap-2">
               {allCities.map(city => (
                 <button
                   key={city}
                   onClick={() => toggleFilter('cities', city)}
-                  className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     activeFilters.cities.includes(city)
-                      ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -387,15 +364,18 @@ const FilterPanel: React.FC<{
 
           {/* Filtre par Spécialité */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Spécialités</h4>
+            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
+              <Stethoscope className="w-4 h-4 mr-2 text-blue-500" />
+              Spécialités
+            </h4>
             <div className="columns-1 sm:columns-2 gap-2">
               {allSpecialties.slice(0, 10).map(specialty => (
-                <label key={specialty} className="flex items-center p-2 space-x-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <label key={specialty} className="flex items-center p-3 space-x-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200">
                   <input
                     type="checkbox"
                     checked={activeFilters.specialties.includes(specialty)}
                     onChange={() => toggleFilter('specialties', specialty)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                   />
                   <span className="text-sm text-gray-700">{specialty}</span>
                 </label>
@@ -405,13 +385,16 @@ const FilterPanel: React.FC<{
           
           {/* Filtre par Services */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Services</h4>
-            <label className="flex items-center p-2 space-x-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
+              <Activity className="w-4 h-4 mr-2 text-blue-500" />
+              Services
+            </h4>
+            <label className="flex items-center p-3 space-x-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200">
               <input
                 type="checkbox"
                 checked={activeFilters.services.includes('Urgences 24/7')}
                 onChange={() => toggleFilter('services', 'Urgences 24/7')}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
               />
               <span className="text-sm text-gray-700">Urgences 24/7</span>
             </label>
@@ -419,290 +402,54 @@ const FilterPanel: React.FC<{
 
           {/* Filtre par Note */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Note minimale</h4>
-            <div className="flex space-x-1">
+            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
+              <Star className="w-4 h-4 mr-2 text-yellow-500" />
+              Note minimale
+            </h4>
+            <div className="flex space-x-2">
               {[1, 2, 3, 4, 5].map(star => (
                 <button
                   key={star}
                   onClick={() => setActiveFilters((prev: any) => ({ ...prev, minRating: star }))}
-                  className="p-1"
+                  className="p-1 transform transition-all duration-200 hover:scale-110"
                 >
-                  <Star className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-200 ${
+                  <Star className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200 ${
                     star <= activeFilters.minRating ? 'text-yellow-500 fill-current' : 'text-gray-300'
                   }`} />
                 </button>
               ))}
             </div>
           </div>
+          
+          {/* Bouton de réinitialisation */}
+          <div className="pt-4 border-t border-gray-100">
+            <button 
+              onClick={resetFilters}
+              className="w-full py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-medium hover:from-gray-200 hover:to-gray-300 transition-all duration-300"
+            >
+              Réinitialiser tous les filtres
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-// Composant Carte
-const MapView: React.FC<{
-  hospitals: Hospital[];
-  userLocation: {lat: number, lng: number} | null;
-  selectedHospital: Hospital | null;
-  setSelectedHospital: (hospital: Hospital | null) => void;
-  getDirections: (hospital: Hospital) => void;
-  navigateToHospitalDetails: (id: string) => void;
-  getTypeLabel: (type: OrganizationType) => string;
-  getMarkerColor: (type: OrganizationType) => string;
-}> = ({ 
-  hospitals, 
-  userLocation, 
-  selectedHospital, 
-  setSelectedHospital, 
-  getDirections, 
-  navigateToHospitalDetails,
-  getTypeLabel,
-  getMarkerColor
-}) => {
-  const [mapBounds, setMapBounds] = useState({ minLat: 2, maxLat: 14, minLng: 8, maxLng: 16 });
-  const [showMapDrawer, setShowMapDrawer] = useState(false);
-
-  // Calculer les limites de la carte en fonction des hôpitaux
-  useEffect(() => {
-    if (hospitals.length > 0) {
-      const lats = hospitals.map(h => h.latitude);
-      const lngs = hospitals.map(h => h.longitude);
-      const minLat = Math.min(...lats) - 0.5;
-      const maxLat = Math.max(...lats) + 0.5;
-      const minLng = Math.min(...lngs) - 0.5;
-      const maxLng = Math.max(...lngs) + 0.5;
-      setMapBounds({ minLat, maxLat, minLng, maxLng });
-    }
-  }, [hospitals]);
-
-  return (
-    <div className="relative h-80 sm:h-96 lg:h-[600px] bg-white rounded-2xl shadow-lg overflow-hidden">
-      {/* Carte OpenStreetMap avec iframe */}
-      <iframe
-        width="100%"
-        height="100%"
-        frameBorder="0"
-        src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapBounds.minLng},${mapBounds.minLat},${mapBounds.maxLng},${mapBounds.maxLat}&layer=mapnik`}
-        style={{ border: 0 }}
-        allowFullScreen
-        title="Carte des hôpitaux"
-      />
-      
-      {/* Marqueurs personnalisés */}
-      {hospitals.map(hospital => {
-        const isSelected = selectedHospital?.id === hospital.id;
-        const markerColor = getMarkerColor(hospital.type);
-        
-        // Calculer la position relative sur la carte
-        const left = ((hospital.longitude - mapBounds.minLng) / (mapBounds.maxLng - mapBounds.minLng)) * 100;
-        const top = ((mapBounds.maxLat - hospital.latitude) / (mapBounds.maxLat - mapBounds.minLat)) * 100;
-        
-        return (
-          <div
-            key={hospital.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ left: `${left}%`, top: `${top}%` }}
-          >
-            <button
-              onClick={() => setSelectedHospital(hospital)}
-              className={`relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full shadow-lg transition-all duration-200 ${
-                isSelected ? 'ring-4 ring-white scale-125' : 'hover:scale-110'
-              }`}
-              style={{ backgroundColor: markerColor }}
-            >
-              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        );
-      })}
-      
-      {/* Contrôles de la carte */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2">
-        <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-        </button>
-        <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors">
-          <Minus className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-        </button>
-        {userLocation && (
-          <button 
-            onClick={() => {
-              // Centrer la carte sur la position de l'utilisateur
-              // Ceci est une simulation, dans une vraie application, vous utiliseriez l'API de la carte
-              alert(`Centrage sur votre position: ${userLocation.lat}, ${userLocation.lng}`);
-            }}
-            className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
-          >
-            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-          </button>
-        )}
-      </div>
-      
-      {/* Popup pour l'hôpital sélectionné */}
-      {selectedHospital && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 bg-white rounded-lg shadow-lg p-3 sm:p-4 w-64 sm:w-80 max-w-[90vw]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
-                <img 
-                  src={getCloudinaryThumbnailUrl(selectedHospital.logo, 48)} 
-                  alt={selectedHospital.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedHospital.name)}&background=e0e7ff&color=4f46e5&size=48`;
-                  }}
-                />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{selectedHospital.name}</h3>
-                <div className="flex items-center">
-                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current" />
-                  <span className="ml-1 text-xs sm:text-sm font-medium">{selectedHospital.rating}</span>
-                </div>
-              </div>
-            </div>
-            <button 
-              onClick={() => setSelectedHospital(null)}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-            </button>
-          </div>
-          
-          <div className="flex items-center mb-3 flex-wrap gap-1">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              selectedHospital.type === OrganizationType.PUBLIC ? 'bg-blue-100 text-blue-800' : 
-              selectedHospital.type === OrganizationType.PRIVATE ? 'bg-purple-100 text-purple-800' : 
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {getTypeLabel(selectedHospital.type)}
-            </span>
-            {userLocation && (
-              <span className="text-xs text-gray-600">
-                {Math.round(
-                  Math.sqrt(
-                    Math.pow(selectedHospital.latitude - userLocation.lat, 2) + 
-                    Math.pow(selectedHospital.longitude - userLocation.lng, 2)
-                  ) * 111
-                )} km
-              </span>
-            )}
-          </div>
-          
-          {selectedHospital.emergencyAvailable && (
-            <div className="flex items-center mb-3 text-sm text-gray-600">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                Urgences 24/7
-              </span>
-            </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button 
-              onClick={() => {
-                navigateToHospitalDetails(selectedHospital.id);
-                setSelectedHospital(null);
-              }}
-              className="flex-1 flex items-center justify-center py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
-            >
-              Voir profil
-            </button>
-            <button 
-              onClick={() => {
-                getDirections(selectedHospital);
-                setSelectedHospital(null);
-              }}
-              className="flex-1 flex items-center justify-center py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors"
-            >
-              Itinéraire
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Liste inférieure (drawer) */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-20 transition-transform duration-300 ${showMapDrawer ? 'translate-y-0' : 'translate-y-[calc(100%-60px)]'}`}>
-        <button 
-          onClick={() => setShowMapDrawer(!showMapDrawer)}
-          className="w-full py-3 flex items-center justify-center"
-        >
-          <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
-        </button>
-        
-        <div className="px-4 pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-              {hospitals.length} hôpitaux
-            </h3>
-            {showMapDrawer && (
-              <button 
-                onClick={() => setShowMapDrawer(false)}
-                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            )}
-          </div>
-          
-          {showMapDrawer && (
-            <div className="space-y-3 max-h-64 sm:max-h-96 overflow-y-auto">
-              {hospitals.map(hospital => {
-                const isSelected = selectedHospital?.id === hospital.id;
-                
-                return (
-                  <div 
-                    key={hospital.id}
-                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => {
-                      setSelectedHospital(hospital);
-                      setShowMapDrawer(false);
-                    }}
-                  >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
-                      <img 
-                        src={getCloudinaryThumbnailUrl(hospital.logo, 48)} 
-                        alt={hospital.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=48`;
-                        }}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate text-sm sm:text-base">{hospital.name}</h4>
-                      <div className="flex items-center flex-wrap gap-2">
-                        <div className="flex items-center">
-                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                          <span className="ml-1 text-xs">{hospital.rating}</span>
-                        </div>
-                        {userLocation && (
-                          <span className="text-xs text-gray-500">
-                            {Math.round(
-                              Math.sqrt(
-                                Math.pow(hospital.latitude - userLocation.lat, 2) + 
-                                Math.pow(hospital.longitude - userLocation.lng, 2)
-                              ) * 111
-                            )} km
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+// Composant Carte avec Leaflet
+const MapView = dynamic(() => import('@/components/MapView'), { 
+  ssr: false,
+  loading: () => (
+    <div className="relative h-80 sm:h-96 lg:h-[600px] bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600 font-medium">Chargement de la carte...</p>
         </div>
       </div>
     </div>
-  );
-};
-
+  )
+});
 // Composant principal
 const HospitalsListPage: React.FC = () => {
   const router = useRouter();
@@ -937,7 +684,7 @@ const HospitalsListPage: React.FC = () => {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-50 to-blue-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600 font-medium">Chargement...</p>
@@ -947,7 +694,7 @@ const HospitalsListPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <Head>
         <title>Liste des Hôpitaux - Santé Cameroun</title>
         <meta name="description" content="Trouvez un hôpital près de vous au Cameroun" />
@@ -962,30 +709,35 @@ const HospitalsListPage: React.FC = () => {
       </Head>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+            <button onClick={() => router.back()} className="p-2.5 rounded-full hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-3 text-lg sm:text-xl font-bold text-gray-900">Hôpitaux</h1>
+            <div className="ml-3 flex items-center">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg mr-3">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hôpitaux</h1>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Barre de recherche et filtres principaux */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 space-y-4">
+        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl p-5 sm:p-6 mb-6 space-y-5 backdrop-blur-sm">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-500" />
             <input
               type="text" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher un hôpital, une spécialité, une ville..."
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-4 bg-gray-50/80 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>
           
@@ -1024,16 +776,16 @@ const HospitalsListPage: React.FC = () => {
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => setViewMode('list')} 
-                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-200 ${
-                  viewMode === 'list' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
+                  viewMode === 'list' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 <List className="w-5 h-5 mx-auto" />
               </button>
               <button 
                 onClick={() => setViewMode('map')} 
-                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-200 ${
-                  viewMode === 'map' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
+                  viewMode === 'map' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 <Grid3x3 className="w-5 h-5 mx-auto" />
@@ -1057,11 +809,12 @@ const HospitalsListPage: React.FC = () => {
         
         {/* En-tête des résultats */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-2 sm:space-y-0">
-          <p className="text-gray-600">
-            <span className="font-semibold text-gray-900">{filteredAndSortedHospitals.length}</span> hôpitaux trouvés
+          <p className="text-gray-600 flex items-center">
+            <span className="font-bold text-gray-900 text-lg mr-2">{filteredAndSortedHospitals.length}</span> 
+            <span className="text-lg">hôpitaux trouvés</span>
             {filteredAndSortedHospitals.length < mockHospitals.length && (
               <span className="ml-2">
-                sur <span className="font-semibold text-gray-900">{mockHospitals.length}</span> au total
+                sur <span className="font-bold text-gray-900 text-lg">{mockHospitals.length}</span> au total
               </span>
             )}
           </p>
@@ -1069,13 +822,15 @@ const HospitalsListPage: React.FC = () => {
             {filteredAndSortedHospitals.length < mockHospitals.length && (
               <button 
                 onClick={() => setShowAllHospitals(true)} 
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-all duration-200 transform hover:scale-105"
               >
+                <Globe className="w-4 h-4 mr-1" />
                 Afficher tous les hôpitaux
               </button>
             )}
             {activeFiltersCount > 0 && (
-              <button onClick={resetFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              <button onClick={resetFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-all duration-200 transform hover:scale-105">
+                <RefreshCw className="w-4 h-4 mr-1" />
                 Réinitialiser les filtres
               </button>
             )}
@@ -1089,42 +844,49 @@ const HospitalsListPage: React.FC = () => {
               displayedHospitals.map(hospital => {
                 const distance = userLocation ? calculateDistance(userLocation.lat, userLocation.lng, hospital.latitude, hospital.longitude) : null;
                 return (
-                  <div key={hospital.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                    <div className="p-4 sm:p-6 lg:flex lg:items-center lg:justify-between">
+                  <div key={hospital.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-1">
+                    <div className="p-5 sm:p-6 lg:flex lg:items-center lg:justify-between">
                       <div className="flex-0 lg:flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
-                          <img 
-                            src={getCloudinaryThumbnailUrl(hospital.logo, 100)} 
-                            alt={hospital.name} 
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover bg-gray-100" 
-                            onError={(e) => { 
-                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=100`; 
-                            }} 
-                          />
+                          <div className="relative">
+                            <img 
+                              src={getCloudinaryThumbnailUrl(hospital.logo, 100)} 
+                              alt={hospital.name} 
+                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner" 
+                              onError={(e) => { 
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=100`; 
+                              }} 
+                            />
+                            {hospital.isVerified && (
+                              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1.5 shadow-md">
+                                <CheckCircle className="w-4 h-4 text-white" />
+                              </div>
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
-                              <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{hospital.name}</h3>
-                              {hospital.isVerified && <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />}
+                              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{hospital.name}</h3>
                             </div>
-                            <div className="flex flex-wrap items-center mt-1 space-x-4 text-sm text-gray-500">
-                              <div className="flex items-center">
+                            <div className="flex flex-wrap items-center mt-2 space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center bg-yellow-100 px-3 py-1 rounded-full">
                                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                <span className="ml-1 font-semibold text-gray-700">{hospital.rating}</span> 
-                                <span className="ml-1">({hospital.totalReviews})</span>
+                                <span className="ml-1 font-bold text-yellow-700">{hospital.rating}</span> 
+                                <span className="ml-1 text-yellow-600">({hospital.totalReviews})</span>
                               </div>
                               {distance && (
-                                <div className="flex items-center">
-                                  <MapPin className="w-4 h-4 mr-1" />
-                                  {distance.toFixed(1)} km
+                                <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
+                                  <MapPin className="w-4 h-4 mr-1 text-blue-500" />
+                                  <span className="font-medium text-blue-700">{distance.toFixed(1)} km</span>
                                 </div>
                               )}
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${getTypeColor(hospital.type)}`}>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getTypeColor(hospital.type)}`}>
                                 {getTypeLabel(hospital.type)}
                               </span>
                               {hospital.emergencyAvailable && (
-                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                  <Activity className="w-3 h-3 mr-1" />
                                   Urgences 24/7
                                 </span>
                               )}
@@ -1135,28 +897,29 @@ const HospitalsListPage: React.FC = () => {
                       <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-wrap gap-2 lg:flex-nowrap lg:items-center lg:space-x-3">
                         <button 
                           onClick={() => toggleFavorite(hospital.id)} 
-                          className={`p-3 rounded-full transition-all duration-200 ${
-                            favorites.includes(hospital.id) ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400 hover:text-red-500'
+                          className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 ${
+                            favorites.includes(hospital.id) ? 'bg-red-100 text-red-500 shadow-md' : 'bg-gray-100 text-gray-400 hover:text-red-500'
                           }`}
                         >
                           <Heart className={`w-5 h-5 ${favorites.includes(hospital.id) ? 'fill-current' : ''}`} />
                         </button>
                         <button 
                           onClick={() => callHospital(hospital.phone)} 
-                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 text-sm"
+                          className="flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 text-sm"
                         >
                           <Phone className="w-4 h-4 mr-2" />
                           <span className="hidden sm:inline">Appeler</span>
                         </button>
                         <button 
                           onClick={() => navigateToHospitalDetails(hospital.id)} 
-                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 text-sm"
+                          className="flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 text-sm"
                         >
-                          Voir profil
+                          <Eye className="w-4 h-4 mr-2" />
+                          <span className="hidden sm:inline">Voir profil</span>
                         </button>
                         <button 
                           onClick={() => getDirections(hospital)} 
-                          className="flex items-center justify-center px-3 sm:px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200 text-sm"
+                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm"
                         >
                           <Navigation className="w-4 h-4 mr-2" />
                           <span className="hidden sm:inline">Itinéraire</span>
@@ -1168,16 +931,19 @@ const HospitalsListPage: React.FC = () => {
               })
             ) : (
               <div className="text-center py-12">
-                <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Aucun hôpital trouvé</h3>
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                  <MapPin className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun hôpital trouvé</h3>
                 <p className="text-gray-500 mb-6">Essayez de modifier vos filtres.</p>
-                <button onClick={resetFilters} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                <button onClick={resetFilters} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   Réinitialiser les filtres
                 </button>
               </div>
             )}
             {displayedHospitals.length < filteredAndSortedHospitals.length && (
-              <button onClick={loadMoreHospitals} className="w-full py-3 bg-white text-gray-700 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200">
+              <button onClick={loadMoreHospitals} className="w-full py-4 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center">
+                <ChevronDown className="w-5 h-5 mr-2" />
                 Charger plus d&apos;hôpitaux ({Math.min(5, filteredAndSortedHospitals.length - displayedHospitals.length)})
               </button>
             )}
