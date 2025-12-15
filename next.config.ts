@@ -87,5 +87,6 @@ export default withPWA({
         },
       },
     ],
+    navigateFallback: '/offline.html',
   },
 })(nextConfig);

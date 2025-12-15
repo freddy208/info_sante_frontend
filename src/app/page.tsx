@@ -1,8 +1,8 @@
 // app/page.tsx
+import Footer from '@/components/layout/Footer';
+import HeroSection from '@/components/portal/HeroSection';
+import TrustSection from '@/components/portal/TrustSection';
 import type { Metadata } from 'next';
-import { HeroSection } from '@/components/portal/HeroSection';
-import { TrustSection } from '@/components/portal/TrustSection';
-import { Footer } from '@/components/layout/Footer';
 
 // SEO : Très important même pour une page portail
 export const metadata: Metadata = {
@@ -19,14 +19,14 @@ export const metadata: Metadata = {
   },
 };
 
-
-export default function PortalPage() {
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <main className="grow">
         <HeroSection />
         <TrustSection />
       </main>
+      
       <Footer />
     </div>
   );
