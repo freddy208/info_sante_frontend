@@ -8,17 +8,18 @@ export function HeroSection() {
   return (
 <section className="
   relative w-full min-h-[600px] md:min-h-[700px]
-  bg-gradient-to-br
-  from-[var(--primary-dark)]   /* Haut-Gauche : Vert Très Foncé (Profond) */
-  via-[var(--secondary)]       /* Milieu : Bleu Vif (Transition dynamique) */
-  to-[var(--secondary-light)]  /* Bas-Droite : Bleu Ciel (Lumière & Profondeur) */
+  bg-(--primary-dark)
+  bg-linear-to-br
+  from-(--primary-dark)
+  via-primary
+  to-(--secondary-dark)
   text-white
   pt-20 pb-32
   overflow-hidden
   flex items-center
 ">
-  {/* Overlay réduit : On laisse les couleurs respirer ! */}
-  <div className="absolute inset-0 bg-black/5 pointer-events-none"></div>
+  {/* Overlay de lisibilité */}
+  <div className="absolute inset-0 bg-black/15 pointer-events-none"></div>
 
       
       {/* Formes d'arrière-plan animées (Blobs) */}
