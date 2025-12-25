@@ -1,32 +1,37 @@
-// app/page.tsx
-import Footer from '@/components/layout/Footer';
-import HeroSection from '@/components/portal/HeroSection';
-import TrustSection from '@/components/portal/TrustSection';
-import type { Metadata } from 'next';
+import { Metadata } from "next";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { AlertBanner } from "@/components/landing/AlertBanner";
+import { UserGate } from "@/components/landing/UserGate";
+// GeoSection est maintenant un Client Component qui gère lui-même le lazy loading interne
+import { GeoSection } from "@/components/landing/GeoSection";
+import Footer from "@/components/layout/Footer";
 
-// SEO : Très important même pour une page portail
 export const metadata: Metadata = {
-  title: "Info Santé 237 | Portail d'information sanitaire au Cameroun",
+  title: "MboaSanté | L'info santé fiable au Cameroun",
   description:
-    "Info Santé 237 est le portail d'information sanitaire du Cameroun. Consultez les actualités de santé, recevez des alertes sanitaires et accédez à des espaces dédiés aux citoyens et aux structures de santé.",
-  keywords:
-    "information sanitaire cameroun, santé cameroun, portail santé cameroun, alertes sanitaires, hôpitaux cameroun, système de santé cameroun",
+    "MboaSanté est votre portail d'information sanitaire au Cameroun.",
+  keywords: "santé cameroun, mboa santé",
   openGraph: {
-    title: "Info Santé 237 | Le portail officiel d'information sanitaire",
-    description:
-      "Actualités, alertes et informations fiables sur la santé au Cameroun.",
-    images: ["/images/og-image-info-sante-237.jpg"],
+    title: "MboaSanté",
+    description: "L'information santé, proche de vous.",
+    type: "website",
   },
 };
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <main className="grow">
         <HeroSection />
-        <TrustSection />
+        <AlertBanner />
+        <UserGate />
+        <GeoSection />
+        
+        <section className="py-12 bg-white text-center">
+            <p className="text-(--text-secondary)">Plus de contenus à venir...</p>
+        </section>
       </main>
-      
+
       <Footer />
     </div>
   );
