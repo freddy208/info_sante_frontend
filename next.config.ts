@@ -15,7 +15,6 @@ export default withPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
-  // skipWaiting: true,  <--- SUPPRIMÉ (Cette option n'existe plus ici)
   reloadOnOnline: true,
   
   workboxOptions: {
@@ -23,6 +22,8 @@ export default withPWA({
       // Règle 1 : API NestJS
       {
         urlPattern: /^https:\/\/api\.votreapp\.com\/.*/, 
+        // CORRECTION : On garde StaleWhileRevalidate pour la rapidité,
+        // mais on supprime 'networkTimeoutSeconds' car incompatible.
         handler: 'StaleWhileRevalidate', 
         options: {
           cacheName: 'api-cache',
@@ -30,7 +31,7 @@ export default withPWA({
             maxEntries: 50,
             maxAgeSeconds: 60 * 60 * 24, // 1 jour
           },
-          networkTimeoutSeconds: 10, 
+          // networkTimeoutSeconds: 10, <--- SUPPRIMÉ (Erreur corrigée)
         },
       },
 
@@ -69,7 +70,7 @@ export default withPWA({
         },
       },
     ],
-    // IMPORTANT : Ce fichier doit exister en tant que fichier HTML statique
+    // IMPORTANT : Assurez-vous que le fichier public/offline.html existe
     navigateFallback: '/offline.html', 
   },
 })(nextConfig);
