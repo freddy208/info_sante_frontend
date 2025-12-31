@@ -1,3 +1,5 @@
+// src/lib/api.ts
+import { NearbyQueryDto, PublicAlert, PublicOrganization, PublicSearchResponse } from '@/types/public';
 import axios from 'axios';
 
 export const apiClient = axios.create({
@@ -29,3 +31,26 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+
+
+export const publicApi = {
+  // ==========================================
+  // 🌐 PUBLIC API (Landing Page)
+  // ==========================================
+
+  // GET /public/alerts
+  getAlerts: (): Promise<PublicAlert[]> =>
+    // On descend d'un niveau pour récupérer le tableau direct
+    apiClient.get('/public/alerts').then((res) => res.data.data),
+
+  // GET /public/organizations/nearby
+  getNearbyOrganizations: (params: NearbyQueryDto): Promise<PublicOrganization[]> =>
+    apiClient.get('/public/organizations/nearby', { params }).then((res) => res.data.data),
+
+  // GET /public/search
+  search: (q: string): Promise<PublicSearchResponse> =>
+    // Attention : search renvoie une réponse structurée, pas juste un tableau
+    // Donc ici on garde res.data, qui correspond à PublicSearchResponse
+    apiClient.get('/public/search', { params: { q } }).then((res) => res.data.data),
+};

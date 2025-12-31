@@ -1,3 +1,5 @@
+import { Priority } from "./advice";
+
 // Enums basés sur le schéma Prisma
 export enum AnnouncementStatus {
   DRAFT = 'DRAFT',
@@ -32,6 +34,7 @@ export interface Announcement {
   excerpt?: string | null;
   featuredImage: string;
   thumbnailImage?: string | null;
+  priority?: Priority; // <--- AJOUTER CECI
   categoryId: string;
   startDate: string;
   endDate: string;

@@ -1,33 +1,131 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, Activity, Zap } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+import { publicApi } from "@/lib/api";
+import { PublicSearchResponse, SearchResultItem } from "@/types/public";
+import Link from "next/link";
 
 export function HeroSection() {
-  return (
-<section className="
-  relative w-full min-h-[600px] md:min-h-[700px]
-  bg-(--primary-dark)
-  bg-linear-to-br
-  from-(--primary-dark)
-  via-primary
-  to-(--secondary-dark)
-  text-white
-  pt-20 pb-32
-  overflow-hidden
-  flex items-center
-">
-  {/* Overlay de lisibilité */}
-  <div className="absolute inset-0 bg-black/15 pointer-events-none"></div>
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PublicSearchResponse | null>(null);
+  const [loading, setLoading] = useState(false);
 
-      
-      {/* Formes d'arrière-plan animées (Blobs) */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-secondary opacity-30 rounded-full blur-[100px] animate-blob"></div>
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-accent opacity-20 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
-      
-      {/* Pattern subtil de texture */}
-      <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+  // Référence pour bloquer les appels API
+  const isFetchingRef = useRef(false);
+  
+  // Référence pour détecter le clic à l'extérieur (UX fermeture dropdown)
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // UX : Si on vide la recherche, on cache tout
+    if (query.length === 0) {
+      setResults(null);
+      setLoading(false);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      if (query.length >= 2 && !isFetchingRef.current) {
+        performSearch(query);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
+
+  // ==========================================
+  // GESTION DU CLIC HORS DE LA ZONE (UX PARFAITE)
+  // ==========================================
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Si le clic n'est PAS dans le conteneur de recherche (input + dropdown)
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        // On ferme le dropdown...
+        setResults(null);
+        setLoading(false);
+        // MAIS on efface PAS query (le texte reste dans l'input)
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setResults(null);
+        setLoading(false);
+      }
+    };
+
+    // On attache les écouteurs d'événements au document
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+
+    // Nettoyage à la destruction du composant
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, []); // [] = s'exécute une seule fois au montage
+
+  const performSearch = async (q: string) => {
+    if (isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
+    setLoading(true);
+
+    try {
+      const res = await publicApi.search(q);
+      setResults(res);
+    } catch (err) {
+      console.error("Erreur recherche", err);
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  };
+
+  // Helper Détermine l'URL selon le type
+  const getLink = (item: SearchResultItem) => {
+    if (item.type === 'ORGANIZATION') {
+      return `/organizations/${item.id}`;
+    }
+    if (item.type === 'ANNOUNCEMENT') {
+      return `/announcements/${(item as any).slug || item.id}`;
+    }
+    if (item.type === 'ARTICLE') {
+      return `/articles/${(item as any).slug || item.id}`;
+    }
+    return '#';
+  };
+
+  const handleTagClick = (tag: string) => {
+    setQuery(tag);
+    // Le useEffect gérera l'appel API
+  };
+
+  return (
+    <section 
+        className="
+      relative w-full min-h-[600px] md:min-h-[700px]
+      bg-(--primary-dark)
+      bg-linear-to-br
+      from-(--primary-dark)
+      via-primary
+      to-(--secondary-dark)
+      text-white
+      pt-20 pb-32
+      overflow-hidden
+      flex items-center"
+      >
+      <div className="absolute inset-0 bg-black/15 pointer-events-none"></div>
+
+      {/* Formes d'arrière-plan animées */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 opacity-30 rounded-full blur-[100px] animate-blob"></div>
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-rose-500 opacity-20 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
       
       <div className="container mx-auto px-4 relative z-10 text-center">
         <motion.div 
@@ -36,7 +134,6 @@ export function HeroSection() {
           transition={{ duration: 0.8 }}
           className="max-w-4xl mx-auto"
         >
-          {/* Badge "Fierté" */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -47,10 +144,9 @@ export function HeroSection() {
             <span className="text-sm font-medium text-white/90">Plateforme nationale d’information sanitaire</span>
           </motion.div>
 
-          {/* Titre Principal */}
           <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight drop-shadow-2xl">
             <span className="block">MboaSanté</span>
-            <span className="block text-3xl md:text-4xl font-light text-(--primary-light) mt-2">
+            <span className="block text-3xl md:text-4xl font-light text-blue-300 mt-2">
              L’information fiable pour mieux protéger votre santé.
             </span>
           </h1>
@@ -59,14 +155,15 @@ export function HeroSection() {
             Une information sanitaire fiable, claire et accessible à tous, pour accompagner les Camerounais partout sur le territoire.
           </p>
 
-          {/* 3. Barre de Recherche "Glassmorphism" Premium */}
+          {/* Barre de Recherche */}
+          {/* AJOUT DE LA REF ICI : searchContainerRef */}
           <motion.div 
+            ref={searchContainerRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="relative max-w-3xl mx-auto group"
+            className="relative max-w-3xl mx-auto group z-50"
           >
-            {/* Effet de lueur derrière la barre (COULEUR BLUE SANTÉ) */}
             <div className="absolute -inset-1 bg-linear-to-r from-blue-400 to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
             
             <div className="relative flex items-center bg-white/95 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-white/50 transform transition-transform duration-300 group-hover:scale-[1.01]">
@@ -77,14 +174,83 @@ export function HeroSection() {
                 type="text"
                 className="w-full bg-transparent border-none text-slate-900 text-lg placeholder-slate-400 focus:outline-none focus:ring-0 h-12"
                 placeholder="Symptômes, hôpitaux, informations de santé..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoComplete="off"
+                // Si l'utilisateur reclique dans l'input alors que results est null mais query n'est pas vide, on pourrait vouloir relancer
+                onFocus={() => {
+                  if (query.length >= 2 && !results && !loading) {
+                    performSearch(query);
+                  }
+                }}
               />
-              <Button className="bg-linear-to-r from-primary to-secondary hover:from-(--primary-dark) hover:to-(--secondary-dark) rounded-full px-8 h-12 text-white font-bold shadow-lg transition-all transform hover:scale-105">
+              <Button 
+                onClick={() => {
+                    if (query.length >= 2 && !isFetchingRef.current) performSearch(query);
+                }}
+                className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-full px-8 h-12 text-white font-bold shadow-lg transition-all transform hover:scale-105"
+              >
                 Rechercher
               </Button>
             </div>
+
+            {/* Dropdown Résultats */}
+            <AnimatePresence>
+              {query.length > 0 && (results || loading) && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 w-full mt-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 text-left"
+                >
+                  {loading ? (
+                    <div className="p-4 flex justify-center text-slate-500 text-sm">
+                       <div className="flex items-center gap-2">
+                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                         Recherche en cours...
+                       </div>
+                    </div>
+                  ) : results?.status === 'success' && results.data.length > 0 ? (
+                    <div className="max-h-96 overflow-y-auto p-2">
+                      {results.data.map((item) => (
+                        <Link href={getLink(item)} key={item.id} className="w-full text-left block">
+                          <button className="w-full text-left p-3 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-3">
+                             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${item.type === 'ORGANIZATION' ? 'bg-blue-500' : item.type === 'ANNOUNCEMENT' ? 'bg-red-500' : 'bg-teal-500'}`}>
+                               {item.type === 'ORGANIZATION' ? 'H' : item.type === 'ANNOUNCEMENT' ? 'A' : 'I'}
+                             </div>
+                             <div className="overflow-hidden">
+                               <h4 className="font-bold text-slate-800 text-sm truncate">{item.title}</h4>
+                               <p className="text-xs text-slate-500 truncate">{(item as any).excerpt || (item as any).cityName}</p>
+                             </div>
+                          </button>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : results?.status === 'empty' ? (
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Search className="w-6 h-6" />
+                      </div>
+                      <h4 className="font-bold text-slate-900">Aucun résultat pour &quot;{query}&quot;</h4>
+                      <p className="text-sm text-slate-500 mb-4">Essayez ces recherches connexes :</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {results.suggestions?.map((s, index) => (
+                          <button 
+                            key={index} 
+                            onClick={() => handleTagClick(s)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 rounded-full text-xs font-semibold transition-colors border border-slate-200"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
-          {/* 4. Tags de recherche populaire (UX pattern moderne) */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -95,6 +261,7 @@ export function HeroSection() {
             {['Choléra', 'Hôpital Central', 'Pharmacie Yaoundé', 'Vaccination'].map((tag, index) => (
               <button 
                 key={index}
+                onClick={() => handleTagClick(tag)}
                 className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-colors flex items-center gap-1"
               >
                 <Activity className="w-3 h-3" />
@@ -103,16 +270,13 @@ export function HeroSection() {
             ))}
           </motion.div>
 
-          {/* 5. Localisation & Confiance (RETOUR AU BLEU MÉDICAL) */}
           <div className="mt-12 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 text-white/60 text-sm font-medium">
             <div className="flex items-center gap-2">
-              {/* Bleu Médical pur */}
               <MapPin className="w-4 h-4 text-blue-300" />
               <span>Couverture des 10 régions du Cameroun</span>
             </div>
             <div className="h-4 w-px bg-white/20 hidden md:block"></div>
             <div className="flex items-center gap-2">
-              {/* Bleu Médical pur */}
               <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
               <span>Plateforme disponible 24h/24</span>
             </div>
@@ -120,20 +284,9 @@ export function HeroSection() {
         </motion.div>
       </div>
       
-      {/* Wave SVG Separator (CORRIGÉ : Vague complète, pas de lignes droites) */}
-      {/* Le path commence maintenant à M0 et finit à 1200 pour éviter l'effet "rebandance" */}
       <div className="absolute bottom-0 left-0 w-full leading-none">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 1200 120" 
-          preserveAspectRatio="none" 
-          className="relative block w-full h-20"
-        >
-          {/* Nouveau Path qui couvre toute la largeur (0 à 1200) pour une vague fluide */}
-          <path 
-            d="M0,50 C150,0 350,100 500,50 C650,0 850,100 1000,50 C1100,15 1150,0 1200,50 V120 H0 V50 Z" 
-            fill="#FFFFFF"
-          ></path>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-20">
+          <path d="M0,50 C150,0 350,100 500,50 C650,0 850,100 1000,50 C1100,15 1150,0 1200,50 V120 H0 V50 Z" fill="#FFFFFF"></path>
         </svg>
       </div>
     </section>
