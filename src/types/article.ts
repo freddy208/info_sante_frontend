@@ -1,4 +1,8 @@
-// Enums basés sur le schéma Prisma
+// ============================================
+// 📰 ARTICLE TYPES (Frontend Mirror)
+// ============================================
+
+// Enum miroir de ArticleStatus (Backend)
 export enum ArticleStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
@@ -7,7 +11,23 @@ export enum ArticleStatus {
   SUSPENDED = 'SUSPENDED',
 }
 
-// Types de base
+// Types simplifiés pour les relations (pour éviter l'import circulaire)
+export interface OrganizationLite {
+  id: string;
+  name: string;
+  logo?: string | null;
+  phone?: string | null;
+}
+
+export interface CategoryLite {
+  id: string;
+  name: string;
+  slug?: string | null;
+  icon?: string | null;
+  color?: string | null;
+}
+
+// Interface Principale Article
 export interface Article {
   id: string;
   organizationId: string;
@@ -26,29 +46,20 @@ export interface Article {
   commentsCount: number;
   reactionsCount: number;
   isFeatured: boolean;
-  publishedAt?: string | null;
+  publishedAt?: string | null; // ISO String
   status: ArticleStatus;
   suspensionReason?: string | null;
   suspendedBy?: string | null;
-  deletedAt?: Date | null;
+  deletedAt?: string | null;
   createdAt: string;
-  updatedAt: Date;
+  updatedAt: string;
   
-  // Inclusions optionnelles
-  organization?: {
-    id: string;
-    name: string;
-    logo?: string | null;
-    phone?: string | null;
-  };
-  category?: {
-    id: string;
-    name: string;
-    slug?: string | null;
-  };
+  // Inclusions (Relations)
+  organization?: OrganizationLite;
+  category?: CategoryLite;
 }
 
-// DTOs pour les formulaires
+// DTOs (Payloads pour création/mise à jour)
 export interface CreateArticleDto {
   title: string;
   content: string;
@@ -59,7 +70,7 @@ export interface CreateArticleDto {
   author?: string;
   readingTime?: number;
   tags?: string[];
-  externalUrl?: string;
+  externalUrl?: string; // 🔥 AJOUTÉ : Était dans votre DTO Backend mais manquant dans le type
 }
 
 export interface UpdateArticleDto {
@@ -72,7 +83,7 @@ export interface UpdateArticleDto {
   author?: string;
   readingTime?: number;
   tags?: string[];
-  externalUrl?: string;
+  externalUrl?: string; // 🔥 AJOUTÉ
 }
 
 export interface QueryArticleDto {
@@ -87,7 +98,7 @@ export interface QueryArticleDto {
   featured?: boolean;
 }
 
-// Types pour les réponses API
+// Réponse API
 export interface PaginatedArticlesResponse {
   data: Article[];
   meta: {

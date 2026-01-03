@@ -1,6 +1,15 @@
-import { Priority } from "./advice";
+// ============================================
+// 📢 ANNOUNCEMENT TYPES (Frontend Mirror)
+// ============================================
 
-// Enums basés sur le schéma Prisma
+// Enums miroirs du Backend
+export enum Priority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
 export enum AnnouncementStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
@@ -24,7 +33,36 @@ export enum TargetAudience {
   STUDENTS = "STUDENTS",
 }
 
-// Types de base
+// Types Relations
+export interface OrganizationLite {
+  id: string;
+  name: string;
+  logo?: string | null;
+  phone?: string | null;
+  type?: string;
+}
+
+export interface CategoryLite {
+  id: string;
+  name: string;
+  slug?: string | null;
+  icon?: string | null;
+}
+
+export interface Location {
+  id: string;
+  contentType: string;
+  contentId: string;
+  address: string;
+  city: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  placeId?: string | null;
+  formattedAddress?: string | null;
+}
+
+// Interface Principale
 export interface Announcement {
   id: string;
   organizationId: string;
@@ -34,10 +72,10 @@ export interface Announcement {
   excerpt?: string | null;
   featuredImage: string;
   thumbnailImage?: string | null;
-  priority?: Priority; // <--- AJOUTER CECI
+  priority?: Priority; // Présent dans le schéma Prisma
   categoryId: string;
-  startDate: string;
-  endDate: string;
+  startDate: string; // ISO String
+  endDate: string;   // ISO String
   targetAudience?: TargetAudience[];
   isFree: boolean;
   cost?: number | null;
@@ -50,37 +88,21 @@ export interface Announcement {
   reactionsCount: number;
   notificationsSent: number;
   isPinned: boolean;
-  publishedAt?: Date | null;
+  publishedAt?: string | null;
   status: AnnouncementStatus;
   suspensionReason?: string | null;
   suspendedBy?: string | null;
-  deletedAt?: Date | null;
-  createdAt: Date | string;
-  updatedAt: Date;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
   
-  // Inclusions optionnelles
-  organization?: {
-    id: string;
-    name: string;
-    logo?: string | null;
-    phone?: string | null;
-  };
-  category?: {
-    id: string;
-    name: string;
-    slug?: string | null;
-  };
-  location?: {
-    id: string;
-    address: string;
-    city: string;
-    region: string;
-    latitude?: number | null;
-    longitude?: number | null;
-  };
+  // Relations (Inclusions)
+  organization?: OrganizationLite;
+  category?: CategoryLite;
+  location?: Location;
 }
 
-// DTOs pour les formulaires
+// DTOs (Payloads pour création/mise à jour)
 export interface CreateAnnouncementDto {
   title: string;
   content: string;
@@ -91,6 +113,7 @@ export interface CreateAnnouncementDto {
   startDate: string;
   endDate: string;
   targetAudience?: TargetAudience[];
+  priority?: Priority;
   isFree?: boolean;
   cost?: number;
   capacity?: number;
@@ -107,6 +130,7 @@ export interface UpdateAnnouncementDto {
   startDate?: string;
   endDate?: string;
   targetAudience?: TargetAudience[];
+  priority?: Priority;
   isFree?: boolean;
   cost?: number;
   capacity?: number;
@@ -121,9 +145,10 @@ export interface QueryAnnouncementDto {
   search?: string;
   city?: string;
   status?: AnnouncementStatus;
+  priority?: Priority; // Ajouté pour filtrer par urgence
 }
 
-// Types pour les réponses API
+// Réponse API
 export interface PaginatedAnnouncementsResponse {
   data: Announcement[];
   meta: {
@@ -134,4 +159,4 @@ export interface PaginatedAnnouncementsResponse {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   };
-}
+};

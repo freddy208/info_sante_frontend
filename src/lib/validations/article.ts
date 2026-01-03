@@ -19,7 +19,7 @@ export const createArticleSchema = z.object({
   author: z.string().max(100, "Le nom de l'auteur ne peut pas dépasser 100 caractères").optional(),
   readingTime: z.number().int().min(1).max(60).optional(),
   tags: z.array(z.string()).optional(),
-  externalUrl: z.string().url('URL invalide').optional(),
+  externalUrl: z.string().url('URL invalide').optional(), // ✅ Correspond au champ ajouté dans le Type Backend
 });
 
 // Schéma pour mettre à jour un article

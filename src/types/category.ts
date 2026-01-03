@@ -1,7 +1,10 @@
+// ============================================
+// 📂 CATEGORY TYPES (Frontend Mirror)
+// ============================================
 
-// Type principal, miroir de votre CategoryEntity et du modèle Prisma
-// Il inclut les relations optionnelles (parent, enfants)
-export type Category = {
+// Interface Principale Category
+// Miroir parfait de CategoryEntity et du Schéma Prisma
+export interface Category {
   id: string;
   name: string;
   slug: string | null;
@@ -14,14 +17,16 @@ export type Category = {
   announcementsCount: number;
   articlesCount: number;
   advicesCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;        // ISO String
+  updatedAt: string;        // ISO String
 
   // Relations optionnelles
   parent?: Category | null;
   children?: Category[];
-};
+}
 
+// DTOs pour les formulaires (Payloads vers le backend)
+// Correspond à CreateCategoryDto et UpdateCategoryDto
 export interface CreateCategoryDto {
   name: string;
   description?: string;
@@ -38,10 +43,11 @@ export interface UpdateCategoryDto {
   color?: string;
   parentId?: string;
   order?: number;
-  isActive?: boolean;
+  isActive?: boolean; // Présent dans UpdateCategoryDto (extends PartialType)
 }
 
 // Type pour la réponse paginée de l'API
+// Correspond à la structure { data: [], meta: {} }
 export interface PaginatedCategoriesResponse {
   data: Category[];
   meta: {

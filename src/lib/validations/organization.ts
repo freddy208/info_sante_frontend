@@ -26,14 +26,12 @@ export const registerOrganizationSchema = z.object({
     .regex(/^\+237[0-9]{9}$/, {
       message: 'Le WhatsApp doit être au format camerounais (+237XXXXXXXXX)',
     })
-    .optional()
-    .or(z.literal('')),
+    .optional(),
   description: z
     .string()
     .max(2000, 'La description ne peut pas dépasser 2000 caractères')
-    .optional()
-    .or(z.literal('')),
-  website: z.string().url('URL du site web invalide').optional().or(z.literal('')),
+    .optional(),
+  website: z.string().url('URL du site web invalide').optional(),
   address: z.string().min(1, "L'adresse est requise"),
   city: z.string().min(1, 'La ville est requise'),
   region: z.string().min(1, 'La région est requise'),
@@ -70,14 +68,12 @@ export const updateOrganizationSchema = z.object({
     .regex(/^\+237[0-9]{9}$/, {
       message: 'Le WhatsApp doit être au format camerounais (+237XXXXXXXXX)',
     })
-    .optional()
-    .or(z.literal('')),
+    .optional(),
   description: z
     .string()
     .max(2000, 'La description ne peut pas dépasser 2000 caractères')
-    .optional()
-    .or(z.literal('')),
-  website: z.string().url('URL du site web invalide').optional().or(z.literal('')),
+    .optional(),
+  website: z.string().url('URL du site web invalide').optional(),
   address: z.string().min(1, "L'adresse est requise").optional(),
   city: z.string().min(1, 'La ville est requise').optional(),
   region: z.string().min(1, 'La région est requise').optional(),
@@ -112,9 +108,8 @@ export const createMemberSchema = z.object({
     .regex(/^\+237[0-9]{9}$/, {
       message: 'Le téléphone doit être au format camerounais (+237XXXXXXXXX)',
     })
-    .optional()
-    .or(z.literal('')),
-  position: z.string().optional().or(z.literal('')),
+    .optional(),
+  position: z.string().optional(),
 });
 
 // Schéma pour la mise à jour d'un membre
@@ -127,9 +122,8 @@ export const updateMemberSchema = z.object({
     .regex(/^\+237[0-9]{9}$/, {
       message: 'Le téléphone doit être au format camerounais (+237XXXXXXXXX)',
     })
-    .optional()
-    .or(z.literal('')),
-  position: z.string().optional().or(z.literal('')),
+    .optional(),
+  position: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 

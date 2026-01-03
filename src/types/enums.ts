@@ -16,5 +16,6 @@ export enum OrganizationType {
   PUBLIC = 'PUBLIC',
   PRIVATE = 'PRIVATE',
   NGO = 'NGO',
+  HOSPITAL_PUBLIC = "HOSPITAL_PUBLIC",
   // ... autres types si nécessaire
 }

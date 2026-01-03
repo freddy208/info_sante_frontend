@@ -14,7 +14,7 @@ const cards = [
     // On utilise des dégradés ou des bordures fines pour un look pro
     gradient: "from-teal-500 to-emerald-600",
     textColor: "text-teal-600",
-    link: "/info",
+    link: "/accueil",
     btnText: "Explorer",
     badge: "Libre d'accès",
     btnVariant: "outline" as const // Style secondaire

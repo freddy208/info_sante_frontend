@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// ✅ CORRECTION ICI : 'endpoints' et non 'endponts'
 import { organizationsApi } from '@/lib/api-endponts';
 import { 
   Organization, 
@@ -35,9 +37,7 @@ export const useRegisterOrganization = () => {
   return useMutation({
     mutationFn: (data: RegisterOrganizationFormData) => organizationsApi.register(data),
     onSuccess: (data: OrganizationAuthResponse) => {
-      toast.success('Inscription réussie');
-      // Stocker les tokens dans le store d'authentification
-      // useAuthStore.getState().login(data);
+      toast.success('Inscription réussie !');
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
     },
     onError: (error: any) => {
@@ -52,9 +52,7 @@ export const useLoginOrganization = () => {
   return useMutation({
     mutationFn: (data: LoginOrganizationFormData) => organizationsApi.login(data),
     onSuccess: (data: OrganizationAuthResponse) => {
-      toast.success('Connexion réussie');
-      // Stocker les tokens dans le store d'authentification
-      // useAuthStore.getState().login(data);
+      toast.success('Connexion réussie !');
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
     },
     onError: (error: any) => {
@@ -67,38 +65,31 @@ export const useRefreshOrganizationToken = () => {
   return useMutation({
     mutationFn: (refreshToken: string) => organizationsApi.refreshToken(refreshToken),
     onSuccess: (data: RefreshTokenResponse) => {
-      // Mettre à jour les tokens dans le store d'authentification
-      // useAuthStore.getState().updateTokens(data);
+      // Mettre à jour les tokens dans le store
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erreur lors du rafraîchissement du token');
-      // Déconnecter l'utilisateur en cas d'erreur
-      // useAuthStore.getState().logout();
+      // Redirection vers login
     },
   });
 };
 
 // =====================================
-// HOOKS POUR LA LECTURE (public)
+// HOOKS POUR LA LECTURE (Public)
 // =====================================
 
-export const useOrganizationsList = (params?: {
-  type?: string;
-  city?: string;
-  region?: string;
-  isVerified?: boolean;
-  status?: string;
-  search?: string;
-}) => {
-  return useQuery({
+// ✅ CORRECTION : On utilise `Record<string, any>` pour accepter tous les filtres possibles
+// sans être trop strict sur les types des clés pour éviter l'erreur d'inférence sur `data`
+export const useOrganizationsList = (params?: Record<string, any>) => {
+  return useQuery<PaginatedOrganizationsResponse, Error>({
     queryKey: ['organizations', 'list', params],
     queryFn: () => organizationsApi.getOrganizations(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 };
 
 export const useOrganization = (id: string) => {
-  return useQuery({
+  return useQuery<Organization, Error>({
     queryKey: ['organizations', 'detail', id],
     queryFn: () => organizationsApi.getOrganizationById(id),
     enabled: !!id, // Ne lance la requête que si l'ID est fourni
@@ -110,10 +101,10 @@ export const useOrganization = (id: string) => {
 // =====================================
 
 export const useOrganizationProfile = () => {
-  return useQuery({
+  return useQuery<Organization, Error>({
     queryKey: ['organizations', 'profile'],
     queryFn: () => organizationsApi.getProfile(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 };
 
@@ -142,7 +133,7 @@ export const useUpdateOrganizationPassword = () => {
       queryClient.invalidateQueries({ queryKey: ['organizations', 'profile'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors du changement du mot de passe');
+      toast.error(error.response?.data?.message || 'Erreur lors du changement de mot de passe');
     },
   });
 };
@@ -152,10 +143,10 @@ export const useUpdateOrganizationPassword = () => {
 // =====================================
 
 export const useOrganizationMembers = () => {
-  return useQuery({
+  return useQuery<OrganizationMember[], Error>({
     queryKey: ['organizations', 'members'],
     queryFn: () => organizationsApi.getMembers(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 };
 

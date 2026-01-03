@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Enums basés sur le schéma Prisma
+// ============================================
+// 🏥 ORGANIZATION TYPES (Frontend Mirror)
+// ============================================
+
+// Enums miroirs du Backend
 export enum OrganizationType {
   HOSPITAL_PUBLIC = 'HOSPITAL_PUBLIC',
-  PUBLIC = 'PUBLIC',
   HOSPITAL_PRIVATE = 'HOSPITAL_PRIVATE',
-  PRIVATE = 'PRIVATE',
   CLINIC = 'CLINIC',
   HEALTH_CENTER = 'HEALTH_CENTER',
-   HEALTH_DISTRICT = 'HEALTH_DISTRICT',
   DISPENSARY = 'DISPENSARY',
   MINISTRY = 'MINISTRY',
   NGO = 'NGO',
@@ -23,11 +24,12 @@ export enum OrganizationStatus {
   DELETED = 'DELETED',
 }
 
-// Types de base
+// Interface Principale Organization
 export interface Organization {
   id: string;
   name: string;
   email: string;
+  password: string; // 🔥 AJOUTÉ : Nécessaire pour l'inscription/connexion côté client avant l'envoi
   type: OrganizationType;
   phone: string;
   whatsapp?: string | null;
@@ -38,26 +40,30 @@ export interface Organization {
   address: string;
   city: string;
   region: string;
+  // ❌ SUPPRIMÉ : 'country' n'est pas dans le schema Prisma
   latitude?: number | null;
   longitude?: number | null;
   registrationNumber: string;
   licenseDocument?: string | null;
   isVerified: boolean;
-  verifiedAt?: Date | null;
+  verifiedAt?: string | null;
   verifiedBy?: string | null;
-  openingHours?: any;
+  openingHours?: any; // Json dans Prisma
   emergencyAvailable: boolean;
   insuranceAccepted: string[];
-  rating?: number | null;
+  
+  // ❌ SUPPRIMÉ : 'rating' n'est pas dans le schema Prisma (calculé ou relation)
+  
   totalReviews: number;
   totalAnnouncements: number;
   totalArticles: number;
+  
   status: OrganizationStatus;
   suspensionReason?: string | null;
-  suspendedAt?: Date | null;
+  suspendedAt?: string | null;
   suspendedBy?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrganizationMember {
@@ -69,11 +75,13 @@ export interface OrganizationMember {
   phone?: string | null;
   position?: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// DTOs pour les formulaires
+// DTOs (Payloads pour création/mise à jour)
+// Ils doivent matcher EXACTEMENT les DTOs NestJS fournis
+
 export interface RegisterOrganizationDto {
   name: string;
   email: string;
@@ -140,7 +148,7 @@ export interface UpdateMemberDto {
   isActive?: boolean;
 }
 
-// Types pour les réponses API
+// Réponses API
 export interface OrganizationAuthResponse {
   organization: Organization;
   accessToken: string;
@@ -162,33 +170,4 @@ export interface PaginatedOrganizationsResponse {
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
-}
-
-
-export interface Hospital {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  region: string;
-  country: string;
-  logo: string;
-  type: OrganizationType;
-  specialties: string[];
-  website: string | null;
-  isActive: boolean;
-  isVerified: boolean;
-  latitude: number;
-  longitude: number;
-  rating: number;
-  totalReviews: number;
-  registrationNumber: string;
-  emergencyAvailable: boolean;
-  insuranceAccepted: string[];
-  openingHours: string;
-  description: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
