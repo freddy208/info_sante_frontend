@@ -1,9 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, Activity, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,14 +13,10 @@ export function HeroSection() {
   const [results, setResults] = useState<PublicSearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Référence pour bloquer les appels API
   const isFetchingRef = useRef(false);
-  
-  // Référence pour détecter le clic à l'extérieur (UX fermeture dropdown)
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // UX : Si on vide la recherche, on cache tout
     if (query.length === 0) {
       setResults(null);
       setLoading(false);
@@ -39,17 +32,11 @@ export function HeroSection() {
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
-  // ==========================================
-  // GESTION DU CLIC HORS DE LA ZONE (UX PARFAITE)
-  // ==========================================
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Si le clic n'est PAS dans le conteneur de recherche (input + dropdown)
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        // On ferme le dropdown...
         setResults(null);
         setLoading(false);
-        // MAIS on efface PAS query (le texte reste dans l'input)
       }
     };
 
@@ -60,20 +47,17 @@ export function HeroSection() {
       }
     };
 
-    // On attache les écouteurs d'événements au document
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscapeKey);
 
-    // Nettoyage à la destruction du composant
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscapeKey);
     };
-  }, []); // [] = s'exécute une seule fois au montage
+  }, []);
 
   const performSearch = async (q: string) => {
     if (isFetchingRef.current) return;
-
     isFetchingRef.current = true;
     setLoading(true);
 
@@ -88,29 +72,36 @@ export function HeroSection() {
     }
   };
 
-  // Helper Détermine l'URL selon le type
   const getLink = (item: SearchResultItem) => {
     if (item.type === 'ORGANIZATION') {
       return `/organizations/${item.id}`;
     }
     if (item.type === 'ANNOUNCEMENT') {
-      return `/announcements/${(item as any).slug || item.id}`;
+      return `/annonces/${item.slug ?? item.id}`;
     }
     if (item.type === 'ARTICLE') {
-      return `/articles/${(item as any).slug || item.id}`;
+      return `/articles/${item.slug ?? item.id}`;
     }
     return '#';
+  };
+  
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (query.length >= 2 && !isFetchingRef.current) {
+      performSearch(query);
+    }
   };
 
   const handleTagClick = (tag: string) => {
     setQuery(tag);
-    // Le useEffect gérera l'appel API
   };
 
   return (
     <section 
+        // ✅ CORRECTION 1 : HAUTEUR FIXE (h au lieu de min-h)
+        // Cela empêche la section de s'agrandir et de pousser le contenu en bas.
         className="
-      relative w-full min-h-[600px] md:min-h-[700px]
+      relative w-full h-[600px] md:h-[700px] 
       bg-(--primary-dark)
       bg-linear-to-br
       from-(--primary-dark)
@@ -121,25 +112,14 @@ export function HeroSection() {
       overflow-hidden
       flex items-center"
       >
+      {/* Background elements... */}
       <div className="absolute inset-0 bg-black/15 pointer-events-none"></div>
-
-      {/* Formes d'arrière-plan animées */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 opacity-30 rounded-full blur-[100px] animate-blob"></div>
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-rose-500 opacity-20 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
       
       <div className="container mx-auto px-4 relative z-10 text-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto"
-        >
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6"
-          >
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-4xl mx-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6">
             <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
             <span className="text-sm font-medium text-white/90">Plateforme nationale d’information sanitaire</span>
           </motion.div>
@@ -156,17 +136,11 @@ export function HeroSection() {
           </p>
 
           {/* Barre de Recherche */}
-          {/* AJOUT DE LA REF ICI : searchContainerRef */}
-          <motion.div 
-            ref={searchContainerRef}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="relative max-w-3xl mx-auto group z-50"
-          >
+          <motion.div ref={searchContainerRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="relative max-w-3xl mx-auto group z-50">
             <div className="absolute -inset-1 bg-linear-to-r from-blue-400 to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
             
-            <div className="relative flex items-center bg-white/95 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-white/50 transform transition-transform duration-300 group-hover:scale-[1.01]">
+            {/* Ajout du <form> pour la touche Entrée */}
+            <form onSubmit={handleSubmit} className="relative flex items-center bg-white/95 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-white/50 transform transition-transform duration-300 group-hover:scale-[1.01]">
               <div className="pl-5 pr-3">
                 <Search className="h-6 w-6 text-slate-400" />
               </div>
@@ -177,31 +151,21 @@ export function HeroSection() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoComplete="off"
-                // Si l'utilisateur reclique dans l'input alors que results est null mais query n'est pas vide, on pourrait vouloir relancer
-                onFocus={() => {
-                  if (query.length >= 2 && !results && !loading) {
-                    performSearch(query);
-                  }
-                }}
               />
-              <Button 
-                onClick={() => {
-                    if (query.length >= 2 && !isFetchingRef.current) performSearch(query);
-                }}
-                className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-full px-8 h-12 text-white font-bold shadow-lg transition-all transform hover:scale-105"
-              >
+              <Button type="submit" className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-full px-8 h-12 text-white font-bold shadow-lg transition-all transform hover:scale-105">
                 Rechercher
               </Button>
-            </div>
+            </form>
 
             {/* Dropdown Résultats */}
             <AnimatePresence>
               {query.length > 0 && (results || loading) && (
                 <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 w-full mt-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 text-left"
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: 10 }} 
+                  // ✅ CORRECTION 2 : Z-INDEX ÉLEVÉ (100) et max-height strict
+                  className="absolute top-full left-0 w-full mt-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-100 text-left"
                 >
                   {loading ? (
                     <div className="p-4 flex justify-center text-slate-500 text-sm">
@@ -211,7 +175,8 @@ export function HeroSection() {
                        </div>
                     </div>
                   ) : results?.status === 'success' && results.data.length > 0 ? (
-                    <div className="max-h-96 overflow-y-auto p-2">
+                    // ✅ CORRECTION 3 : Max-height pour éviter que le dropdown occupe tout l'écran visuellement
+                    <div className="max-h-[400px] overflow-y-auto p-2">
                       {results.data.map((item) => (
                         <Link href={getLink(item)} key={item.id} className="w-full text-left block">
                           <button className="w-full text-left p-3 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-3">
@@ -220,7 +185,9 @@ export function HeroSection() {
                              </div>
                              <div className="overflow-hidden">
                                <h4 className="font-bold text-slate-800 text-sm truncate">{item.title}</h4>
-                               <p className="text-xs text-slate-500 truncate">{(item as any).excerpt || (item as any).cityName}</p>
+                               <p className="text-xs text-slate-500 truncate">
+                                 {item.type === 'ORGANIZATION' ? item.cityName : item.excerpt}
+                               </p>
                              </div>
                           </button>
                         </Link>
@@ -235,11 +202,7 @@ export function HeroSection() {
                       <p className="text-sm text-slate-500 mb-4">Essayez ces recherches connexes :</p>
                       <div className="flex flex-wrap justify-center gap-2">
                         {results.suggestions?.map((s, index) => (
-                          <button 
-                            key={index} 
-                            onClick={() => handleTagClick(s)}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 rounded-full text-xs font-semibold transition-colors border border-slate-200"
-                          >
+                          <button key={index} onClick={() => handleTagClick(s)} className="px-3 py-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 rounded-full text-xs font-semibold transition-colors border border-slate-200">
                             {s}
                           </button>
                         ))}
@@ -251,19 +214,10 @@ export function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-6 flex flex-wrap justify-center items-center gap-3 text-sm text-white/70"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-6 flex flex-wrap justify-center items-center gap-3 text-sm text-white/70">
             <span className="font-semibold">Populaires :</span>
             {['Choléra', 'Hôpital Central', 'Pharmacie Yaoundé', 'Vaccination'].map((tag, index) => (
-              <button 
-                key={index}
-                onClick={() => handleTagClick(tag)}
-                className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-colors flex items-center gap-1"
-              >
+              <button key={index} onClick={() => handleTagClick(tag)} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-colors flex items-center gap-1">
                 <Activity className="w-3 h-3" />
                 {tag}
               </button>
@@ -284,6 +238,7 @@ export function HeroSection() {
         </motion.div>
       </div>
       
+      {/* Footer Hero SVG... */}
       <div className="absolute bottom-0 left-0 w-full leading-none">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-20">
           <path d="M0,50 C150,0 350,100 500,50 C650,0 850,100 1000,50 C1100,15 1150,0 1200,50 V120 H0 V50 Z" fill="#FFFFFF"></path>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/lib/api.ts
 import { NearbyQueryDto, PublicAlert, PublicOrganization, PublicSearchResponse } from '@/types/public';
 import axios from 'axios';
@@ -32,25 +33,43 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ==========================================
+// FONCTION DE SÉCURITÉ POUR DÉBALLER LES RÉPONSES
+// ==========================================
+// Gère le cas où NestJS renvoie { data: [...] } (Wrapper) ou [...] direct
+// Et gère le cas où une erreur 400 renvoie un objet d'erreur au lieu du tableau
+const unwrapResponse = (res: any) => {
+  // 1. Si la réponse est une erreur HTTP (400, 500...), on laisse l'erreur se propager
+  // ou on vérifie si c'est un objet d'erreur
+  if (res.status !== 200 && res.status !== 201) {
+    throw new Error(`API Error: ${res.statusText}`);
+  }
 
+  // 2. Si la réponse est vide, on retourne un tableau vide par sécurité
+  if (!res.data) return [];
+
+  // 3. Cas standard : La réponse est directement ce qu'on veut (Tableau ou Objet Search)
+  if (Array.isArray(res.data)) return res.data;
+  
+  // 4. Cas Wrapper : La réponse est enveloppée dans { data: [...] }
+  if (typeof res.data === 'object' && 'data' in res.data) {
+    return res.data.data;
+  }
+
+  // 5. Fallback : On retourne la donnée brute
+  return res.data;
+};
 
 export const publicApi = {
-  // ==========================================
-  // 🌐 PUBLIC API (Landing Page)
-  // ==========================================
-
   // GET /public/alerts
   getAlerts: (): Promise<PublicAlert[]> =>
-    // On descend d'un niveau pour récupérer le tableau direct
-    apiClient.get('/public/alerts').then((res) => res.data.data),
+    apiClient.get('/public/alerts').then(unwrapResponse),
 
   // GET /public/organizations/nearby
   getNearbyOrganizations: (params: NearbyQueryDto): Promise<PublicOrganization[]> =>
-    apiClient.get('/public/organizations/nearby', { params }).then((res) => res.data.data),
+    apiClient.get('/public/organizations/nearby', { params }).then(unwrapResponse),
 
-  // GET /public/search
+  // GET /public/search (Note: search retourne un objet structuré { status, data }, pas un tableau direct)
   search: (q: string): Promise<PublicSearchResponse> =>
-    // Attention : search renvoie une réponse structurée, pas juste un tableau
-    // Donc ici on garde res.data, qui correspond à PublicSearchResponse
-    apiClient.get('/public/search', { params: { q } }).then((res) => res.data.data),
+    apiClient.get('/public/search', { params: { q } }).then((res) => unwrapResponse(res)),
 };

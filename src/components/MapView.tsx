@@ -1,20 +1,24 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+ 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Star, Target, X } from 'lucide-react';
+import Image from 'next/image';
 import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
-import { Hospital, OrganizationType } from '@/types/organization';
+import { Organization, OrganizationType } from '@/types/organization';
 
 interface MapViewProps {
-  hospitals: Hospital[];
+  hospitals: Organization[];
   userLocation: {lat: number, lng: number} | null;
-  selectedHospital: Hospital | null;
-  setSelectedHospital: React.Dispatch<React.SetStateAction<Hospital | null>>;
-  getDirections: (hospital: Hospital) => void;
-  navigateToHospitalDetails: (id: string) => void;
-  getTypeLabel: (type: OrganizationType) => string;  // Changé de string à OrganizationType
-  getMarkerColor: (type: OrganizationType) => string;  // Changé de string à OrganizationType
+  selectedHospital: Organization | null;
+  setSelectedHospital: React.Dispatch<React.SetStateAction<Organization | null>>;
+  getDirections: (hospital: Organization) => void;
+  navigateToDetails: (id: string) => void;
+  getTypeLabel: (type: OrganizationType) => string;
+  getMarkerColor: (type: OrganizationType) => string;
 }
 
 const MapView: React.FC<MapViewProps> = ({ 
@@ -23,7 +27,7 @@ const MapView: React.FC<MapViewProps> = ({
   selectedHospital, 
   setSelectedHospital, 
   getDirections, 
-  navigateToHospitalDetails,
+  navigateToDetails,
   getTypeLabel,
   getMarkerColor
 }) => {
@@ -32,9 +36,21 @@ const MapView: React.FC<MapViewProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
 
-  // Icônes personnalisées pour les marqueurs
-const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // Changé de string à OrganizationType
-  const color = getMarkerColor(type);
+  // ✅ CORRECTION : On déplace l'assignation window au début de l'effet pour s'assurer qu'elle est prête quand les marqueurs sont créés
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).navigateToDetails = (id: string) => {
+        navigateToDetails(id);
+      };
+      (window as any).getDirections = (id: string) => {
+        const hospital = hospitals.find(h => h.id === id);
+        if (hospital) getDirections(hospital);
+      };
+    }
+  }, [hospitals, navigateToDetails, getDirections]); // Dépendances correctes
+
+  const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {
+    const color = getMarkerColor(type);
     const size = isSelected ? 40 : 32;
     
     return L.divIcon({
@@ -75,7 +91,7 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
       `,
       className: 'custom-marker',
       iconSize: [size, size],
-      iconAnchor: [size/2, size], // Pointe en bas du marqueur
+      iconAnchor: [size/2, size], 
       popupAnchor: [0, -size/2]
     });
   };
@@ -84,20 +100,17 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    // Créer la carte
     const map = L.map(mapRef.current, {
-      center: [4.0483, 9.7043], // Centre du Cameroun
+      center: [4.0483, 9.7043], 
       zoom: 7,
       zoomControl: false
     });
 
-    // Ajouter la couche de tuiles OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 18
     }).addTo(map);
 
-    // Ajouter les contrôles de zoom personnalisés
     L.control.zoom({
       position: 'topright'
     }).addTo(map);
@@ -112,36 +125,36 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
     };
   }, []);
 
-  // Mettre à jour les marqueurs quand les hôpitaux changent
+  // Mettre à jour les marqueurs
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Supprimer les anciens marqueurs
     markersRef.current.forEach(marker => {
       mapInstanceRef.current?.removeLayer(marker);
     });
     markersRef.current = [];
 
-    // Ajouter les nouveaux marqueurs
-    hospitals.forEach(hospital => {
+    const validHospitals = hospitals.filter(h => h.latitude && h.longitude);
+
+    validHospitals.forEach(hospital => {
       const isSelected = selectedHospital?.id === hospital.id;
+      
       const marker = L.marker(
-        [hospital.latitude, hospital.longitude],
+        [hospital.latitude!, hospital.longitude!],
         { icon: createCustomIcon(hospital.type, isSelected) }
       ).addTo(mapInstanceRef.current!);
 
-      // Créer le contenu du popup
       const popupContent = `
         <div style="min-width: 250px; font-family: system-ui, -apple-system, sans-serif;">
           <div style="display: flex; align-items: center; margin-bottom: 12px;">
-            <img src="${getCloudinaryThumbnailUrl(hospital.logo, 60)}" 
+            <img src="${getCloudinaryThumbnailUrl(hospital.logo!, 60)}" 
                  style="width: 50px; height: 50px; border-radius: 8px; margin-right: 12px; object-fit: cover;"
                  onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=50'">
             <div>
               <h3 style="margin: 0; font-weight: bold; font-size: 16px;">${hospital.name}</h3>
               <div style="display: flex; align-items: center; margin-top: 4px;">
                 <span style="background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-                  ⭐ ${hospital.rating}
+                  ⭐ ${hospital.totalReviews} avis
                 </span>
                 <span style="margin-left: 8px; color: #6B7280; font-size: 14px;">
                   ${getTypeLabel(hospital.type)}
@@ -175,13 +188,11 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
       markersRef.current.push(marker);
     });
 
-    // Ajuster la vue pour inclure tous les marqueurs
-    if (hospitals.length > 0) {
+    if (validHospitals.length > 0) {
       const group = new L.FeatureGroup(markersRef.current);
       mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
     }
 
-    // Centrer sur la position de l'utilisateur si disponible
     if (userLocation) {
       const userMarker = L.marker(
         [userLocation.lat, userLocation.lng],
@@ -206,26 +217,12 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
       
       markersRef.current.push(userMarker);
     }
-  }, [hospitals, selectedHospital, userLocation, getTypeLabel, getMarkerColor]);
-
-  // Exposer les fonctions globales pour les popups
-  useEffect(() => {
-    (window as any).navigateToDetails = (id: string) => {
-      navigateToHospitalDetails(id);
-    };
-    
-    (window as any).getDirections = (id: string) => {
-      const hospital = hospitals.find(h => h.id === id);
-      if (hospital) getDirections(hospital);
-    };
-  }, [hospitals, navigateToHospitalDetails, getDirections]);
+  }, [hospitals, selectedHospital, userLocation, getTypeLabel, getMarkerColor, navigateToDetails]); // Dépendance ajoutée
 
   return (
     <div className="relative h-80 sm:h-96 lg:h-[600px] bg-white rounded-2xl shadow-xl overflow-hidden">
-      {/* Conteneur pour la carte Leaflet */}
       <div ref={mapRef} className="w-full h-full" />
       
-      {/* Contrôle de recentrage sur la position utilisateur */}
       {userLocation && (
         <button 
           onClick={() => {
@@ -233,19 +230,18 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
               mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 12);
             }
           }}
-          className="absolute top-4 right-4 z-[1000] w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-200 transform hover:scale-110"
+          className="absolute top-4 right-4 z-1000 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-200 transform hover:scale-110"
         >
           <Target className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
         </button>
       )}
       
-      {/* Liste inférieure (drawer) */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg rounded-t-2xl shadow-2xl z-[1000] transition-transform duration-300 ${showMapDrawer ? 'translate-y-0' : 'translate-y-[calc(100%-70px)]'}`}>
+      <div className={`absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg rounded-t-2xl shadow-2xl z-1000 transition-transform duration-300 ${showMapDrawer ? 'translate-y-0' : 'translate-y-[calc(100%-70px)]'}`}>
         <button 
           onClick={() => setShowMapDrawer(!showMapDrawer)}
           className="w-full py-4 flex items-center justify-center hover:bg-gray-50 transition-colors"
         >
-          <div className="w-14 h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"></div>
+          <div className="w-14 h-1.5 bg-linear-to-r from-blue-400 to-indigo-500 rounded-full"></div>
         </button>
         
         <div className="px-5 pb-5">
@@ -268,30 +264,35 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
             <div className="space-y-3 max-h-64 sm:max-h-96 overflow-y-auto">
               {hospitals.map(hospital => {
                 const isSelected = selectedHospital?.id === hospital.id;
+                const hospitalLogo = hospital.logo 
+                  ? getCloudinaryThumbnailUrl(hospital.logo, 56)
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=56`;
                 
                 return (
                   <div 
                     key={hospital.id}
-                    className={`flex items-center p-3 rounded-xl cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
-                      isSelected ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-md' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
+                    // ✅ CORRECTION : Wrapper clickable (cursor-pointer) pour le Drawer
+                    className="flex items-center p-3 rounded-xl cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
+                      isSelected ? 'bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-md' : 'bg-gray-50 hover:bg-gray-100'
+                    }"
                     onClick={() => {
                       setSelectedHospital(hospital);
                       setShowMapDrawer(false);
-                      // Centrer la carte sur l'hôpital sélectionné
-                      if (mapInstanceRef.current) {
+                      if (mapInstanceRef.current && hospital.latitude && hospital.longitude) {
                         mapInstanceRef.current.setView([hospital.latitude, hospital.longitude], 14);
                       }
+                      // ✅ AJOUT : Navigation vers les détails quand on clique sur la carte du drawer
+                      navigateToDetails(hospital.id);
                     }}
                   >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden mr-3 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-inner">
-                      <img 
-                        src={getCloudinaryThumbnailUrl(hospital.logo, 56)} 
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden mr-3 bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-inner relative">
+                      <Image 
+                        src={hospitalLogo}
                         alt={hospital.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=56`;
-                        }}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover rounded-xl"
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -299,9 +300,9 @@ const createCustomIcon = (type: OrganizationType, isSelected: boolean) => {  // 
                       <div className="flex items-center flex-wrap gap-2 mt-1">
                         <div className="flex items-center bg-yellow-100 px-2 py-0.5 rounded-full">
                           <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                          <span className="ml-1 text-xs font-medium text-yellow-700">{hospital.rating}</span>
+                          <span className="ml-1 text-xs font-medium text-yellow-700">{hospital.totalReviews} avis</span>
                         </div>
-                        {userLocation && (
+                        {userLocation && hospital.latitude && hospital.longitude && (
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                             {Math.round(
                               Math.sqrt(

@@ -1,281 +1,79 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 /* eslint-disable @next/next/no-img-element */
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { MapPin, Phone, Star, Clock, Filter, Search, X, ChevronDown, Grid3x3, List, Heart, Navigation, Plus, Minus, Target, Shield, CheckCircle, Users, Calendar, Activity, TrendingUp, Award, ChevronUp, Stethoscope, Eye, Globe, RefreshCw } from 'lucide-react';
-import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
-import { Hospital, OrganizationType } from '@/types/organization';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  MapPin, Phone, Star, Filter, Search, ChevronDown, Grid3x3, List, Heart, Navigation, Target, Shield, CheckCircle, Activity, RefreshCw, ChevronUp, Lock 
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
+// Imports API & Types
+import { organizationsApi, reactionsApi } from '@/lib/api-endponts'; 
+import { Organization, OrganizationType, PaginatedOrganizationsResponse } from '@/types/organization';
+import { CreateReactionDto, ReactionType as ReactReactionType, ContentType } from '@/types/reaction';
+
+// Imports Composants
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
 import dynamic from 'next/dynamic';
 
+// --- UTILITAIRES & HOOKS ---
 
-// Données mock
-const mockHospitals: Hospital[] = [
-  {
-    id: '1',
-    name: 'Hôpital Central de Yaoundé',
-    email: 'info@hcy.cm',
-    phone: '+237 222 23 14 52',
-    address: 'Avenue Charles Atangana',
-    city: 'Yaoundé',
-    region: 'Centre',
-    country: 'Cameroun',
-    logo: 'hcy-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Cardiologie', 'Pédiatrie', 'Gynécologie', 'Urgences 24/7'],
-    website: 'https://www.hcy.cm',
-    isActive: true,
-    isVerified: true,
-    latitude: 3.8480,
-    longitude: 11.5021,
-    rating: 4.2,
-    totalReviews: 156,
-    registrationNumber: 'HCY-2020-001',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS', 'Allianz', 'AXA'],
-    openingHours: '24/7',
-    description: 'Hôpital de référence pour les maladies cardiaques et pédiatriques',
-    createdAt: new Date('2020-01-15'),
-    updatedAt: new Date('2023-08-10')
-  },
-  {
-    id: '2',
-    name: 'Hôpital Laquintinie de Douala',
-    email: 'contact@laquintinie.cm',
-    phone: '+237 233 42 11 31',
-    address: 'Boulevard de la Liberté',
-    city: 'Douala',
-    region: 'Littoral',
-    country: 'Cameroun',
-    logo: 'laquintinie-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Chirurgie', 'Ophtalmologie', 'Urgences 24/7'],
-    website: null,
-    isActive: true,
-    isVerified: true,
-    latitude: 4.0483,
-    longitude: 9.7043,
-    rating: 4.0,
-    totalReviews: 142,
-    registrationNumber: 'HLQ-2019-002',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS', 'Allianz'],
-    openingHours: '24/7',
-    description: 'Spécialisé en chirurgie et ophtalmologie',
-    createdAt: new Date('2019-05-20'),
-    updatedAt: new Date('2023-07-22')
-  },
-  {
-    id: '3',
-    name: 'Hôpital Général de Douala',
-    email: 'info@hgd.cm',
-    phone: '+237 233 42 20 11',
-    address: 'Rue Joss',
-    city: 'Douala',
-    region: 'Littoral',
-    country: 'Cameroun',
-    logo: 'hgd-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Médecine Interne', 'Pédiatrie', 'Urgences 24/7'],
-    website: 'https://www.hgd.cm',
-    isActive: true,
-    isVerified: true,
-    latitude: 4.0511,
-    longitude: 9.7679,
-    rating: 3.8,
-    totalReviews: 128,
-    registrationNumber: 'HGD-2018-003',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS'],
-    openingHours: '24/7',
-    description: 'Hôpital général avec services de médecine interne et pédiatrie',
-    createdAt: new Date('2018-11-10'),
-    updatedAt: new Date('2023-08-05')
-  },
-  {
-    id: '4',
-    name: 'Hôpital Jamot de Yaoundé',
-    email: 'contact@hopital-jamot.cm',
-    phone: '+237 222 23 16 01',
-    address: 'Rue Mballa II',
-    city: 'Yaoundé',
-    region: 'Centre',
-    country: 'Cameroun',
-    logo: 'hopital-jamot-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Pneumologie', 'Cardiologie', 'Urgences 24/7'],
-    website: null,
-    isActive: true,
-    isVerified: true,
-    latitude: 3.8660,
-    longitude: 11.5185,
-    rating: 4.1,
-    totalReviews: 167,
-    registrationNumber: 'HJY-2021-004',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS', 'Allianz', 'AXA'],
-    openingHours: '24/7',
-    description: 'Spécialisé en pneumologie et cardiologie',
-    createdAt: new Date('2021-02-18'),
-    updatedAt: new Date('2023-08-15')
-  },
-  {
-    id: '5',
-    name: 'Centre Hospitalier et Universitaire (CHU) de Yaoundé',
-    email: 'info@chu-yaounde.cm',
-    phone: '+237 222 23 40 14',
-    address: 'Campus de l\'Université de Yaoundé I',
-    city: 'Yaoundé',
-    region: 'Centre',
-    country: 'Cameroun',
-    logo: 'chu-yaounde-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Toutes spécialités', 'Urgences 24/7', 'Formation médicale'],
-    website: 'https://www.chu-yaounde.cm',
-    isActive: true,
-    isVerified: true,
-    latitude: 3.8265,
-    longitude: 11.4998,
-    rating: 4.3,
-    totalReviews: 189,
-    registrationNumber: 'CHUY-2017-005',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS', 'Allianz', 'AXA', 'Mutuelle des fonctionnaires'],
-    openingHours: '24/7',
-    description: 'Centre hospitalier universitaire avec toutes les spécialités',
-    createdAt: new Date('2017-09-05'),
-    updatedAt: new Date('2023-08-20')
-  },
-  {
-    id: '6',
-    name: 'Hôpital Régional de Bafoussam',
-    email: 'info@hr-bafoussam.cm',
-    phone: '+237 233 33 12 45',
-    address: 'Avenue des Chutes',
-    city: 'Bafoussam',
-    region: 'Ouest',
-    country: 'Cameroun',
-    logo: 'hr-bafoussam-logo.png',
-    type: OrganizationType.PUBLIC,
-    specialties: ['Médecine Générale', 'Pédiatrie', 'Urgences 24/7'],
-    website: null,
-    isActive: true,
-    isVerified: true,
-    latitude: 5.4769,
-    longitude: 10.4182,
-    rating: 3.7,
-    totalReviews: 98,
-    registrationNumber: 'HRB-2019-006',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS'],
-    openingHours: '24/7',
-    description: 'Hôpital régional desservant la région de l\'Ouest',
-    createdAt: new Date('2019-07-30'),
-    updatedAt: new Date('2023-07-10')
-  },
-  {
-    id: '7',
-    name: 'Hôpital Ad Lucem de Mbouda',
-    email: 'contact@adlucem-mbouda.cm',
-    phone: '+237 233 33 56 78',
-    address: 'Quartier Chefferie',
-    city: 'Mbouda',
-    region: 'Ouest',
-    country: 'Cameroun',
-    logo: 'adlucem-logo.png',
-    type: OrganizationType.PRIVATE,
-    specialties: ['Chirurgie', 'Gynécologie', 'Urgences'],
-    website: 'https://www.adlucem-mbouda.cm',
-    isActive: true,
-    isVerified: false,
-    latitude: 5.6363,
-    longitude: 10.2548,
-    rating: 3.9,
-    totalReviews: 76,
-    registrationNumber: 'HALM-2020-007',
-    emergencyAvailable: false,
-    insuranceAccepted: ['Allianz', 'AXA'],
-    openingHours: '08:00 - 18:00',
-    description: 'Hôpital privé spécialisé en chirurgie et gynécologie',
-    createdAt: new Date('2020-03-12'),
-    updatedAt: new Date('2023-06-25')
-  },
-  {
-    id: '8',
-    name: 'Hôpital Protestant de Ngaoundéré',
-    email: 'info@hpn-gaoundere.cm',
-    phone: '+237 222 62 12 34',
-    address: 'Quartier Djalingo',
-    city: 'Ngaoundéré',
-    region: 'Adamaoua',
-    country: 'Cameroun',
-    logo: 'hpn-logo.png',
-    type: OrganizationType.PRIVATE,
-    specialties: ['Médecine Interne', 'Pédiatrie', 'Urgences 24/7'],
-    website: null,
-    isActive: true,
-    isVerified: true,
-    latitude: 7.3158,
-    longitude: 13.5785,
-    rating: 3.6,
-    totalReviews: 84,
-    registrationNumber: 'HPN-2021-008',
-    emergencyAvailable: true,
-    insuranceAccepted: ['CNPS', 'Mutuelle des fonctionnaires'],
-    openingHours: '24/7',
-    description: 'Hôpital protestant avec services de médecine interne et pédiatrie',
-    createdAt: new Date('2021-10-08'),
-    updatedAt: new Date('2023-08-01')
-  }
-];
+function useDebounce<T>(value: T, delay?: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
-/// --- COMPOSANTS SUR MESURE ---
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
 
-// Composant Dropdown personnalisé et moderne
+  return debouncedValue;
+}
+
+const MapView = dynamic(() => import('@/components/MapView'), { 
+  ssr: false,
+  loading: () => (
+    <div className="relative h-96 bg-white rounded-2xl shadow-xl overflow-hidden flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  )
+});
+
+// --- COMPOSANTS UI ---
+
 interface CustomDropdownProps {
-  value: string | number;
+  value: string | number | undefined;
   onChange: (value: string | number) => void;
-  options: { value: string | number; label: string; count?: number }[];
+  options: { value: string | number; label: string }[];
   placeholder?: string;
   icon?: React.ReactNode;
 }
+
 const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, options, placeholder, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div ref={dropdownRef} className="relative w-full sm:w-auto">
+    <div className="relative w-full z-30">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 backdrop-blur-sm"
+        className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium shadow-sm hover:border-blue-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        <div className="flex items-center">
+        <div className="flex items-center truncate">
           {icon && <span className="mr-2 text-blue-500">{icon}</span>}
           <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute z-20 w-full mt-2 bg-white/95 backdrop-blur-lg border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {options.map((option) => (
             <button
               key={option.value}
@@ -283,12 +81,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, option
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 ${
-                value === option.value ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-medium border-l-4 border-blue-500' : 'text-gray-700'
+              className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 transition-colors ${
+                value === option.value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700'
               }`}
             >
-              <span>{option.label}</span>
-              {option.count !== undefined && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">({option.count})</span>}
+              {option.label}
             </button>
           ))}
         </div>
@@ -297,63 +94,49 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ value, onChange, option
   );
 };
 
-// Composant Filtre Dépliable
 const FilterPanel: React.FC<{
   activeFilters: any;
   setActiveFilters: React.Dispatch<React.SetStateAction<any>>;
   allCities: string[];
   allTypes: OrganizationType[];
-  allSpecialties: string[];
-  mockHospitals: Hospital[];
   getTypeLabel: (type: OrganizationType) => string;
   resetFilters: () => void;
-  filteredCount: number;
-}> = ({ activeFilters, setActiveFilters, allCities, allTypes, allSpecialties, mockHospitals, getTypeLabel, resetFilters, filteredCount }) => {
+}> = ({ activeFilters, setActiveFilters, allCities, allTypes, getTypeLabel, resetFilters }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const toggleFilter = (filterType: string, value: string) => {
-    setActiveFilters((prev: { [x: string]: string[]; }) => {
-      const currentValues = prev[filterType] as string[];
-      if (currentValues.includes(value)) {
-        return { ...prev, [filterType]: currentValues.filter(v => v !== value) };
-      } else {
-        return { ...prev, [filterType]: [...currentValues, value] };
-      }
+  const toggleCity = (city: string) => {
+    setActiveFilters((prev: any) => {
+      const current = prev.cities || [];
+      return { ...prev, cities: current.includes(city) ? current.filter((c: string) => c !== city) : [...current, city] };
     });
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-5 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300"
+        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
       >
-        <div className="flex items-center">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg mr-3">
-            <Filter className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="font-bold text-gray-900">Filtres avancés</h3>
+        <div className="flex items-center font-bold text-gray-700">
+          <Filter className="w-4 h-4 mr-2 text-blue-600" />
+          Filtres
         </div>
-        <ChevronUp className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+        <ChevronUp className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
       
       {isExpanded && (
-        <div className="px-5 pb-5 space-y-6 border-t border-gray-100">
-          {/* Filtre par Ville */}
+        <div className="p-5 space-y-6 border-t border-gray-100">
           <div>
-            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-              <MapPin className="w-4 h-4 mr-2 text-blue-500" />
-              Ville
-            </h4>
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Ville</h4>
             <div className="flex flex-wrap gap-2">
               {allCities.map(city => (
                 <button
                   key={city}
-                  onClick={() => toggleFilter('cities', city)}
-                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  onClick={() => toggleCity(city)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     activeFilters.cities.includes(city)
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {city}
@@ -362,430 +145,239 @@ const FilterPanel: React.FC<{
             </div>
           </div>
 
-          {/* Filtre par Spécialité */}
-          <div>
-            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-              <Stethoscope className="w-4 h-4 mr-2 text-blue-500" />
-              Spécialités
-            </h4>
-            <div className="columns-1 sm:columns-2 gap-2">
-              {allSpecialties.slice(0, 10).map(specialty => (
-                <label key={specialty} className="flex items-center p-3 space-x-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200">
-                  <input
-                    type="checkbox"
-                    checked={activeFilters.specialties.includes(specialty)}
-                    onChange={() => toggleFilter('specialties', specialty)}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <span className="text-sm text-gray-700">{specialty}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          
-          {/* Filtre par Services */}
-          <div>
-            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-              <Activity className="w-4 h-4 mr-2 text-blue-500" />
-              Services
-            </h4>
-            <label className="flex items-center p-3 space-x-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200">
-              <input
-                type="checkbox"
-                checked={activeFilters.services.includes('Urgences 24/7')}
-                onChange={() => toggleFilter('services', 'Urgences 24/7')}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-              />
-              <span className="text-sm text-gray-700">Urgences 24/7</span>
-            </label>
-          </div>
-
-          {/* Filtre par Note */}
-          <div>
-            <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-              <Star className="w-4 h-4 mr-2 text-yellow-500" />
-              Note minimale
-            </h4>
-            <div className="flex space-x-2">
-              {[1, 2, 3, 4, 5].map(star => (
-                <button
-                  key={star}
-                  onClick={() => setActiveFilters((prev: any) => ({ ...prev, minRating: star }))}
-                  className="p-1 transform transition-all duration-200 hover:scale-110"
-                >
-                  <Star className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200 ${
-                    star <= activeFilters.minRating ? 'text-yellow-500 fill-current' : 'text-gray-300'
-                  }`} />
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Bouton de réinitialisation */}
-          <div className="pt-4 border-t border-gray-100">
-            <button 
-              onClick={resetFilters}
-              className="w-full py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-medium hover:from-gray-200 hover:to-gray-300 transition-all duration-300"
-            >
-              Réinitialiser tous les filtres
-            </button>
-          </div>
+          <button 
+            onClick={resetFilters}
+            className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Réinitialiser
+          </button>
         </div>
       )}
     </div>
   );
 };
 
-// Composant Carte avec Leaflet
-const MapView = dynamic(() => import('@/components/MapView'), { 
-  ssr: false,
-  loading: () => (
-    <div className="relative h-80 sm:h-96 lg:h-[600px] bg-white rounded-2xl shadow-xl overflow-hidden">
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Chargement de la carte...</p>
+const LoginModal: React.FC<{ isOpen: boolean; onClose: () => void; onRedirect: () => void }> = ({ isOpen, onClose, onRedirect }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
+        <p className="text-gray-500 mb-6">Vous devez être connecté pour ajouter cet hôpital à vos favoris.</p>
+        <div className="space-y-3">
+          <button 
+            onClick={onRedirect}
+            className="w-full py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+          >
+            Se connecter
+          </button>
+          <button 
+            onClick={onClose}
+            className="w-full py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors"
+          >
+            Annuler
+          </button>
         </div>
       </div>
     </div>
-  )
-});
-// Composant principal
+  );
+};
+
+// --- PAGE PRINCIPALE ---
+
 const HospitalsListPage: React.FC = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // États
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [activeFilters, setActiveFilters] = useState<{ cities: string[]; types: string[]; specialties: string[]; services: string[]; distance: number; minRating: number; }>({
-    cities: [], types: [], specialties: [], services: [], distance: 100, // Augmenté à 100km pour inclure plus d'hôpitaux
-    minRating: 0
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  
+  const [activeFilters, setActiveFilters] = useState<{
+    cities: string[];
+    type: OrganizationType | string;
+  }>({
+    cities: [],
+    type: ''
   });
+
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'name'>('distance');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [showMapDrawer, setShowMapDrawer] = useState(false);
-  const [displayCount, setDisplayCount] = useState(8); // Augmenté à 8 pour afficher plus d'hôpitaux
-  const [searchQuery, setSearchQuery] = useState('');
-  const [mounted, setMounted] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [showAllHospitals, setShowAllHospitals] = useState(false); // Nouvel état pour afficher tous les hôpitaux
+  const [selectedHospital, setSelectedHospital] = useState<Organization | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
+
+  // --- REACT QUERY : RÉCUPÉRATION DES DONNÉES ---
+  const { 
+    data: organizationsData, 
+    isLoading, 
+    isError, 
+    error,
+    refetch 
+  } = useQuery<PaginatedOrganizationsResponse>({
+    queryKey: ['organizations', 'list', debouncedSearch, activeFilters.cities, activeFilters.type, sortBy, 1],
+    queryFn: () => organizationsApi.getOrganizations({
+      search: debouncedSearch,
+      city: activeFilters.cities[0],
+      type: activeFilters.type as string || undefined,
+      limit: 20,
+    }),
+    placeholderData: (previousData) => previousData,
+  });
+
+  const organizations = organizationsData?.data || [];
+  const total = organizationsData?.meta.total || 0;
+
+  // --- REACT QUERY : LIKES ---
+  const toggleReactionMutation = useMutation({
+    mutationFn: (data: CreateReactionDto) => reactionsApi.create(data),
+    onSuccess: (returnedData, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'list'] });
+      if (returnedData) {
+        toast.success('Ajouté aux favoris');
+      } else {
+        toast.success('Retiré des favoris');
+      }
+    },
+    onError: (error: any) => {
+      if (error.response?.status === 401) {
+        setShowLoginModal(true);
+      } else {
+        toast.error('Erreur lors de la mise à jour');
+      }
+    }
+  });
+
+  // --- EFFETS ---
   useEffect(() => {
-    if (!mounted) return;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
-        () => setUserLocation({ lat: 4.0483, lng: 9.7043 })
+        () => setUserLocation(null)
       );
-    } else {
-      setUserLocation({ lat: 4.0483, lng: 9.7043 });
     }
-  }, [mounted]);
+  }, []);
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+  // --- HANDLERS ---
+  const handleLike = (hospitalId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Important pour ne pas naviguer en cliquant sur "J'aime"
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    toggleReactionMutation.mutate({
+      contentType: ContentType.ORGANIZATION,
+      contentId: hospitalId,
+      type: ReactReactionType.LIKE
+    });
   };
 
-  const filteredAndSortedHospitals = useMemo(() => {
-    let filtered = [...mockHospitals];
-    
-    // Filtrer par recherche
-    if (searchQuery) {
-      filtered = filtered.filter(hospital => 
-        hospital.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hospital.specialties.some(spec => spec.toLowerCase().includes(searchQuery.toLowerCase())) || 
-        hospital.city.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Filtrer par ville
-    if (activeFilters.cities.length > 0) {
-      filtered = filtered.filter(hospital => activeFilters.cities.includes(hospital.city));
-    }
-    
-    // Filtrer par type
-    if (activeFilters.types.length > 0) {
-      filtered = filtered.filter(hospital => activeFilters.types.includes(hospital.type));
-    }
-    
-    // Filtrer par spécialités
-    if (activeFilters.specialties.length > 0) {
-      filtered = filtered.filter(hospital => 
-        activeFilters.specialties.some(spec => hospital.specialties.includes(spec))
-      );
-    }
-    
-    // Filtrer par services
-    if (activeFilters.services.length > 0) {
-      filtered = filtered.filter(hospital => {
-        if (activeFilters.services.includes('Urgences 24/7') && !hospital.emergencyAvailable) {
-          return false;
-        }
-        return true;
-      });
-    }
-    
-    // Filtrer par distance (uniquement si la position de l'utilisateur est disponible et si showAllHospitals est false)
-    if (userLocation && !showAllHospitals) {
-      filtered = filtered.filter(hospital => {
-        const distance = calculateDistance(
-          userLocation.lat, 
-          userLocation.lng, 
-          hospital.latitude, 
-          hospital.longitude
-        );
-        return distance <= activeFilters.distance;
-      });
-    }
-    
-    // Filtrer par note minimale
-    if (activeFilters.minRating > 0) {
-      filtered = filtered.filter(hospital => hospital.rating >= activeFilters.minRating);
-    }
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
-    // Trier
-    filtered.sort((a, b) => {
-      if (sortBy === 'distance' && userLocation) {
-        const distanceA = calculateDistance(
-          userLocation.lat, 
-          userLocation.lng, 
-          a.latitude, 
-          a.longitude
-        );
-        const distanceB = calculateDistance(
-          userLocation.lat, 
-          userLocation.lng, 
-          b.latitude, 
-          b.longitude
-        );
-        return distanceA - distanceB;
-      } else if (sortBy === 'rating') {
-        return b.rating - a.rating;
-      } else if (sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
-    });
-    
-    return filtered;
-  }, [activeFilters, sortBy, userLocation, searchQuery, showAllHospitals]);
+  const resetFilters = () => {
+    setActiveFilters({ cities: [], type: '' });
+    setSearchQuery('');
+  };
 
-  const displayedHospitals = filteredAndSortedHospitals.slice(0, displayCount);
-  const featuredHospitals = useMemo(() => [...mockHospitals].sort((a, b) => b.rating - a.rating).slice(0, 3), []);
-  
-  // Implémentation correcte des fonctions de type
   const getTypeLabel = (type: OrganizationType): string => {
     switch (type) {
-      case OrganizationType.PUBLIC:
-        return 'Hôpital Public';
-      case OrganizationType.PRIVATE:
-        return 'Hôpital Privé';
-      case OrganizationType.CLINIC:
-        return 'Clinique';
-      case OrganizationType.HEALTH_CENTER:
-        return 'Centre de Santé';
-      case OrganizationType.NGO:
-        return 'ONG Médicale';
-      case OrganizationType.HEALTH_DISTRICT:
-        return 'District de Santé';
-      default:
-        return 'Établissement';
+      case OrganizationType.HOSPITAL_PUBLIC: return 'Hôpital Public';
+      case OrganizationType.HOSPITAL_PRIVATE: return 'Hôpital Privé';
+      case OrganizationType.CLINIC: return 'Clinique';
+      case OrganizationType.HEALTH_CENTER: return 'Centre de Santé';
+      case OrganizationType.DISPENSARY: return 'Dispensaire';
+      case OrganizationType.NGO: return 'ONG';
+      case OrganizationType.MINISTRY: return 'Ministère';
+      default: return type;
     }
   };
 
   const getTypeColor = (type: OrganizationType): string => {
     switch (type) {
-      case OrganizationType.PUBLIC:
-        return 'bg-blue-100 text-blue-800';
-      case OrganizationType.PRIVATE:
-        return 'bg-purple-100 text-purple-800';
-      case OrganizationType.CLINIC:
-        return 'bg-green-100 text-green-800';
-      case OrganizationType.HEALTH_CENTER:
-        return 'bg-yellow-100 text-yellow-800';
-      case OrganizationType.NGO:
-        return 'bg-pink-100 text-pink-800';
-      case OrganizationType.HEALTH_DISTRICT:
-        return 'bg-indigo-100 text-indigo-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case OrganizationType.HOSPITAL_PUBLIC: return 'bg-blue-100 text-blue-800';
+      case OrganizationType.HOSPITAL_PRIVATE: return 'bg-purple-100 text-purple-800';
+      case OrganizationType.CLINIC: return 'bg-green-100 text-green-800';
+      case OrganizationType.HEALTH_CENTER: return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getMarkerColor = (type: OrganizationType): string => {
-    switch (type) {
-      case OrganizationType.PUBLIC:
-        return '#3B82F6'; // Bleu
-      case OrganizationType.PRIVATE:
-        return '#8B5CF6'; // Violet
-      case OrganizationType.CLINIC:
-        return '#10B981'; // Vert
-      case OrganizationType.HEALTH_CENTER:
-        return '#F59E0B'; // Orange
-      case OrganizationType.NGO:
-        return '#EC4899'; // Rose
-      case OrganizationType.HEALTH_DISTRICT:
-        return '#6366F1'; // Indigo
-      default:
-        return '#6B7280'; // Gris
-    }
-  };
+  const navigateToDetails = (id: string) => router.push(`/hopitals/${id}`);
 
-  const resetFilters = () => { 
-    setActiveFilters({ cities: [], types: [], specialties: [], services: [], distance: 100, minRating: 0 }); 
-    setSearchQuery(''); 
-    setShowAllHospitals(false); // Réinitialiser aussi l'état showAllHospitals
-  };
-  
-  // Implémentation correcte de activeFiltersCount
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    count += activeFilters.cities.length;
-    count += activeFilters.types.length;
-    count += activeFilters.specialties.length;
-    count += activeFilters.services.length;
-    if (activeFilters.distance !== 100) count += 1; // Changé de 20 à 100
-    if (activeFilters.minRating > 0) count += 1;
-    if (searchQuery) count += 1;
-    if (showAllHospitals) count -= 1; // Ne pas compter showAllHospitals comme un filtre actif
-    return count;
-  }, [activeFilters, searchQuery, showAllHospitals]);
-  
-  const allCities = [...new Set(mockHospitals.map(h => h.city))];
-  const allTypes = [...new Set(mockHospitals.map(h => h.type))];
-  const allSpecialties = [...new Set(mockHospitals.flatMap(h => h.specialties))];
-  const loadMoreHospitals = () => setDisplayCount(prev => prev + 5);
-  const navigateToHospitalDetails = (id: string) => {
-  // Stocke l'hôpital sélectionné
-  sessionStorage.setItem('selectedHospital', JSON.stringify(mockHospitals.find(h => h.id === id)));
-  router.push('/hopitals/details');
-};
-  const callHospital = (phone: string) => window.open(`tel:${phone}`);
-  const getDirections = (hospital: Hospital) => {
-    if (typeof window !== 'undefined') {
-      if (userLocation) {
-        window.open(
-          `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.lng}/${hospital.latitude},${hospital.longitude}`,
-          '_blank'
-        );
-      } else {
-        window.open(
-          `https://www.google.com/maps/search/?api=1&query=${hospital.latitude},${hospital.longitude}`,
-          '_blank'
-        );
-      }
-    }
-  };
-  const toggleFavorite = (id: string) => setFavorites(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // --- RENDERS ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Head>
-        <title>Liste des Hôpitaux - Santé Cameroun</title>
-        <meta name="description" content="Trouvez un hôpital près de vous au Cameroun" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:title" content="Liste des Hôpitaux - Santé Cameroun" />
-        <meta property="og:description" content="Trouvez un hôpital près de vous au Cameroun" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Liste des Hôpitaux - Santé Cameroun" />
-        <meta name="twitter:description" content="Trouvez un hôpital près de vous au Cameroun" />
+        <title>Trouvez un Hôpital - Santé Cameroun</title>
+        <meta name="description" content="Annuaire des hôpitaux et cliniques au Cameroun" />
       </Head>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <button onClick={() => router.back()} className="p-2.5 rounded-full hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="ml-3 flex items-center">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg mr-3">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hôpitaux</h1>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900 ml-2">Hôpitaux</h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Barre de recherche et filtres principaux */}
-        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl p-5 sm:p-6 mb-6 space-y-5 backdrop-blur-sm">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-500" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        
+        {/* Search & Quick Filters */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text" 
               value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un hôpital, une spécialité, une ville..."
-              className="w-full pl-12 pr-4 py-4 bg-gray-50/80 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              onChange={handleSearchChange}
+              placeholder="Rechercher par nom, ville..."
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
             />
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <CustomDropdown
               value={activeFilters.cities[0] || ''}
-              onChange={(val) => setActiveFilters(prev => ({ ...prev, cities: val ? [val as string] : [] }))}
-              options={[{ value: '', label: 'Toutes les villes' }, ...allCities.map(c => ({ value: c, label: c }))]}
+              onChange={(val) => setActiveFilters(prev => ({ ...prev, cities: val ? [String(val)] : [] }))}
+              options={[{ value: '', label: 'Toutes les villes' }, { value: 'Douala', label: 'Douala' }, { value: 'Yaoundé', label: 'Yaoundé' }, { value: 'Bafoussam', label: 'Bafoussam' }]}
               placeholder="Ville"
               icon={<MapPin className="w-4 h-4" />}
             />
             <CustomDropdown
-              value={activeFilters.types[0] || ''}
-              onChange={(val) => setActiveFilters(prev => ({ ...prev, types: val ? [val as string] : [] }))}
-              options={[{ value: '', label: 'Tous les types' }, ...allTypes.map(t => ({ value: t, label: getTypeLabel(t as OrganizationType) }))]}
+              value={activeFilters.type}
+              onChange={(val) => setActiveFilters(prev => ({ ...prev, type: String(val) }))}
+              options={[{ value: '', label: 'Tous les types' }, { value: OrganizationType.HOSPITAL_PUBLIC, label: 'Public' }, { value: OrganizationType.HOSPITAL_PRIVATE, label: 'Privé' }, { value: OrganizationType.CLINIC, label: 'Clinique' }]}
               placeholder="Type"
               icon={<Shield className="w-4 h-4" />}
             />
-            <CustomDropdown
-              value={activeFilters.distance}
-              onChange={(val) => {
-                setActiveFilters(prev => ({ ...prev, distance: val as number }));
-                setShowAllHospitals(false); // Désactiver showAllHospitals lorsqu'un filtre de distance est appliqué
-              }}
-              options={[{ value: 5, label: 'Moins de 5 km' }, { value: 10, label: 'Moins de 10 km' }, { value: 20, label: 'Moins de 20 km' }, { value: 50, label: 'Moins de 50 km' }, { value: 100, label: 'Moins de 100 km' }]}
-              placeholder="Distance"
-              icon={<Target className="w-4 h-4" />}
-            />
-            <CustomDropdown
-              value={sortBy}
-              onChange={(val) => setSortBy(val as 'distance' | 'rating' | 'name')}
-              options={[{ value: 'distance', label: 'Plus proche' }, { value: 'rating', label: 'Mieux noté' }, { value: 'name', label: 'Nom (A-Z)' }]}
-              placeholder="Trier par"
-              icon={<TrendingUp className="w-4 h-4" />}
-            />
-            <div className="flex items-center space-x-2">
+            <div className="col-span-2 flex items-center space-x-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
               <button 
                 onClick={() => setViewMode('list')} 
-                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                  viewMode === 'list' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <List className="w-5 h-5 mx-auto" />
               </button>
               <button 
                 onClick={() => setViewMode('map')} 
-                className={`flex-1 p-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                  viewMode === 'map' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === 'map' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <Grid3x3 className="w-5 h-5 mx-auto" />
@@ -794,176 +386,162 @@ const HospitalsListPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Panneau de filtres avancés */}
+        {/* Advanced Filters */}
         <FilterPanel
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
-          allCities={allCities}
-          allTypes={allTypes}
-          allSpecialties={allSpecialties}
-          mockHospitals={mockHospitals}
+          allCities={['Douala', 'Yaoundé', 'Bafoussam', 'Ngaoundéré', 'Bamenda']}
+          allTypes={[OrganizationType.HOSPITAL_PUBLIC, OrganizationType.HOSPITAL_PRIVATE, OrganizationType.CLINIC]}
           getTypeLabel={getTypeLabel}
           resetFilters={resetFilters}
-          filteredCount={filteredAndSortedHospitals.length}
         />
-        
-        {/* En-tête des résultats */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-2 sm:space-y-0">
-          <p className="text-gray-600 flex items-center">
-            <span className="font-bold text-gray-900 text-lg mr-2">{filteredAndSortedHospitals.length}</span> 
-            <span className="text-lg">hôpitaux trouvés</span>
-            {filteredAndSortedHospitals.length < mockHospitals.length && (
-              <span className="ml-2">
-                sur <span className="font-bold text-gray-900 text-lg">{mockHospitals.length}</span> au total
-              </span>
-            )}
+
+        {/* Results Header */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-gray-600 font-medium">
+            <span className="text-gray-900 font-bold text-lg">{total}</span> hôpitaux trouvés
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-            {filteredAndSortedHospitals.length < mockHospitals.length && (
-              <button 
-                onClick={() => setShowAllHospitals(true)} 
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-all duration-200 transform hover:scale-105"
-              >
-                <Globe className="w-4 h-4 mr-1" />
-                Afficher tous les hôpitaux
-              </button>
-            )}
-            {activeFiltersCount > 0 && (
-              <button onClick={resetFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-all duration-200 transform hover:scale-105">
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Réinitialiser les filtres
-              </button>
-            )}
-          </div>
+          <button onClick={() => refetch()} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
+            <RefreshCw className="w-4 h-4 mr-1" /> Actualiser
+          </button>
         </div>
 
-        {/* Vue Liste */}
+        {/* List View */}
         {viewMode === 'list' && (
-          <div className="space-y-6 pb-24">
-            {displayedHospitals.length > 0 ? (
-              displayedHospitals.map(hospital => {
-                const distance = userLocation ? calculateDistance(userLocation.lat, userLocation.lng, hospital.latitude, hospital.longitude) : null;
-                return (
-                  <div key={hospital.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-1">
-                    <div className="p-5 sm:p-6 lg:flex lg:items-center lg:justify-between">
-                      <div className="flex-0 lg:flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
-                          <div className="relative">
-                            <img 
-                              src={getCloudinaryThumbnailUrl(hospital.logo, 100)} 
-                              alt={hospital.name} 
-                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner" 
-                              onError={(e) => { 
-                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=100`; 
-                              }} 
-                            />
-                            {hospital.isVerified && (
-                              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1.5 shadow-md">
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2">
-                              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{hospital.name}</h3>
-                            </div>
-                            <div className="flex flex-wrap items-center mt-2 space-x-4 text-sm text-gray-500">
-                              <div className="flex items-center bg-yellow-100 px-3 py-1 rounded-full">
-                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                <span className="ml-1 font-bold text-yellow-700">{hospital.rating}</span> 
-                                <span className="ml-1 text-yellow-600">({hospital.totalReviews})</span>
-                              </div>
-                              {distance && (
-                                <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
-                                  <MapPin className="w-4 h-4 mr-1 text-blue-500" />
-                                  <span className="font-medium text-blue-700">{distance.toFixed(1)} km</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getTypeColor(hospital.type)}`}>
-                                {getTypeLabel(hospital.type)}
-                              </span>
-                              {hospital.emergencyAvailable && (
-                                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                                  <Activity className="w-3 h-3 mr-1" />
-                                  Urgences 24/7
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-wrap gap-2 lg:flex-nowrap lg:items-center lg:space-x-3">
-                        <button 
-                          onClick={() => toggleFavorite(hospital.id)} 
-                          className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 ${
-                            favorites.includes(hospital.id) ? 'bg-red-100 text-red-500 shadow-md' : 'bg-gray-100 text-gray-400 hover:text-red-500'
-                          }`}
-                        >
-                          <Heart className={`w-5 h-5 ${favorites.includes(hospital.id) ? 'fill-current' : ''}`} />
-                        </button>
-                        <button 
-                          onClick={() => callHospital(hospital.phone)} 
-                          className="flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 text-sm"
-                        >
-                          <Phone className="w-4 h-4 mr-2" />
-                          <span className="hidden sm:inline">Appeler</span>
-                        </button>
-                        <button 
-                          onClick={() => navigateToHospitalDetails(hospital.id)} 
-                          className="flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 text-sm"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          <span className="hidden sm:inline">Voir profil</span>
-                        </button>
-                        <button 
-                          onClick={() => getDirections(hospital)} 
-                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm"
-                        >
-                          <Navigation className="w-4 h-4 mr-2" />
-                          <span className="hidden sm:inline">Itinéraire</span>
-                        </button>
+          <div className="space-y-4">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 animate-pulse">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-20 h-20 bg-gray-200 rounded-xl"></div>
+                    <div className="flex-1 space-y-3">
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="flex space-x-2 mt-4">
+                        <div className="h-8 w-24 bg-gray-200 rounded-lg"></div>
+                        <div className="h-8 w-24 bg-gray-200 rounded-lg"></div>
                       </div>
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
-                  <MapPin className="w-10 h-10 text-gray-300" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun hôpital trouvé</h3>
-                <p className="text-gray-500 mb-6">Essayez de modifier vos filtres.</p>
-                <button onClick={resetFilters} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  Réinitialiser les filtres
+              ))
+            ) : isError ? (
+              <div className="text-center py-12 bg-white rounded-2xl">
+                <p className="text-red-500 font-medium">Erreur lors du chargement des hôpitaux.</p>
+                <button onClick={() => refetch()} className="mt-4 text-blue-600 underline">Réessayer</button>
+              </div>
+            ) : organizations.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl">
+                <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-gray-900">Aucun résultat</h3>
+                <p className="text-gray-500 mb-4">Essayez de modifier vos critères de recherche.</p>
+                <button onClick={resetFilters} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700">
+                  Effacer les filtres
                 </button>
               </div>
-            )}
-            {displayedHospitals.length < filteredAndSortedHospitals.length && (
-              <button onClick={loadMoreHospitals} className="w-full py-4 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center">
-                <ChevronDown className="w-5 h-5 mr-2" />
-                Charger plus d&apos;hôpitaux ({Math.min(5, filteredAndSortedHospitals.length - displayedHospitals.length)})
-              </button>
+            ) : (
+              organizations.map((hospital) => (
+                // ✅ CORRECTION : Ajout de cursor-pointer sur la div de carte
+                <div key={hospital.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-300 cursor-pointer">
+                  <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-4" onClick={() => navigateToDetails(hospital.id)}>
+                    <div className="relative group">
+                      <img 
+                        src={hospital.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(hospital.name)}&background=e0e7ff&color=4f46e5&size=100`} 
+                        alt={hospital.name} 
+                        className="w-24 h-24 rounded-xl object-cover bg-gray-50"
+                      />
+                      {hospital.isVerified && (
+                        <div className="absolute -top-1 -right-1 bg-blue-600 text-white p-1 rounded-full shadow-sm border-2 border-white">
+                          <CheckCircle className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 truncate">{hospital.name}</h3>
+                          <div className="flex items-center mt-1 text-sm text-gray-500 space-x-3">
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getTypeColor(hospital.type)}`}>
+                              {getTypeLabel(hospital.type)}
+                            </span>
+                            {hospital.emergencyAvailable && (
+                              <span className="flex items-center text-red-600 font-medium text-xs">
+                                <Activity className="w-3 h-3 mr-1" /> Urgences 24/7
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 text-sm text-gray-600 line-clamp-2">{hospital.description}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center mt-4 space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 mr-1 text-blue-500" />
+                          {hospital.city}, {hospital.region}
+                        </div>
+                        <div className="flex items-center">
+                          <Star className="w-4 h-4 mr-1 text-yellow-500 fill-current" />
+                          <span className="font-bold text-gray-900">{hospital.totalReviews || 0} avis</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-row sm:flex-col gap-2 sm:gap-2">
+                      <button 
+                        onClick={(e) => handleLike(hospital.id, e)} // ✅ StopPropagation ajouté
+                        className={`p-2.5 rounded-xl flex-1 sm:flex-none transition-all ${
+                          toggleReactionMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+                        }`}
+                        title="Ajouter aux favoris"
+                      >
+                        <Heart className={`w-6 h-6 text-gray-400 hover:text-red-500 transition-colors ${toggleReactionMutation.isPending ? 'animate-pulse' : ''}`} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); window.open(`tel:${hospital.phone}`); }} // ✅ StopPropagation ajouté
+                        className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                        title="Appeler"
+                      >
+                        <Phone className="w-6 h-6" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigateToDetails(hospital.id); }} // ✅ StopPropagation ajouté (bouton explicite au cas où)
+                        className="p-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex-1 sm:flex-none"
+                        title="Voir détails"
+                      >
+                        <Navigation className="w-6 h-6 mx-auto" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}
 
-        {/* Vue Carte */}
+        {/* Map View */}
         {viewMode === 'map' && (
-          <MapView
-            hospitals={filteredAndSortedHospitals}
-            userLocation={userLocation}
-            selectedHospital={selectedHospital}
-            setSelectedHospital={setSelectedHospital}
-            getDirections={getDirections}
-            navigateToHospitalDetails={navigateToHospitalDetails}
-            getTypeLabel={getTypeLabel}
-            getMarkerColor={getMarkerColor}
-          />
+           <div className="h-[600px] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
+             <MapView 
+               hospitals={organizations}
+               userLocation={userLocation}
+               selectedHospital={selectedHospital}
+               setSelectedHospital={setSelectedHospital}
+               getDirections={(h) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`)}
+               navigateToDetails={navigateToDetails} // ✅ Prop passée correctement
+               getTypeLabel={getTypeLabel}
+               getMarkerColor={(t) => t === OrganizationType.HOSPITAL_PUBLIC ? '#3B82F6' : '#8B5CF6'}
+             />
+           </div>
         )}
       </main>
+
+      {/* Modal Connexion */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+        onRedirect={() => router.push('/login')} 
+      />
     </div>
   );
 };

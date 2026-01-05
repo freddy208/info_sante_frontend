@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -9,12 +8,16 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Activity, ArrowRight, Bell, Users, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-
-// Imports API et Hooks
-import { useOrganizationsList } from '@/hooks/useOrganizations';
+ import { useOrganizationsList } from '@/hooks/useOrganizations';
 import { useAnnouncementsList } from '@/hooks/useAnnouncements';
 
-// Types (Interface locale pour la recherche)
+// CORRECTION IMPORT : On importe depuis @/lib/api
+import { publicApi } from '@/lib/api';
+
+// ==========================================
+// 1. DÉFINITION DES TYPES (Locale pour éviter l'erreur d'import)
+// ==========================================
+
 interface SearchResultItem {
   id: string;
   title: string;
@@ -25,11 +28,18 @@ interface SearchResultItem {
   region?: string | null;
 }
 
+// On redéfinit l'interface ici car l'import depuis @/types/public échoue chez toi
+interface PublicSearchResponse {
+  status: 'success' | 'empty';
+  data: SearchResultItem[];
+  suggestions?: string[];
+}
+
 export default function HeroSection() {
   const router = useRouter();
   
   // ==========================================
-  // 1. ÉTAT LOCAL (Search & UX)
+  // 2. ÉTAT LOCAL (Search & UX)
   // ==========================================
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResultItem[] | null>(null);
@@ -41,8 +51,11 @@ export default function HeroSection() {
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // ==========================================
-  // 2. DONNÉES RÉELLES (API) pour les Stats
+  // 3. DONNÉES RÉELLES (API) pour les Stats
   // ==========================================
+  
+  // Assure-toi que ces hooks existent et sont importés correctement
+ 
   
   const { data: announcementsData } = useAnnouncementsList({ page: 1, limit: 1 });
   const announcementsCount = announcementsData?.meta?.total ?? 0;
@@ -55,7 +68,7 @@ export default function HeroSection() {
   const usersCount = 50000; 
 
   // ==========================================
-  // 3. LOGIQUE DE RECHERCHE
+  // 4. LOGIQUE DE RECHERCHE (API RÉELLE)
   // ==========================================
 
   useEffect(() => {
@@ -112,18 +125,19 @@ export default function HeroSection() {
     setLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      if (q.toLowerCase().includes('vaccination')) {
-        setResults([
-          { id: '1', type: 'ANNOUNCEMENT', title: 'Campagne Vaccination', slug: 'vaccination', excerpt: 'Gratuit pour les enfants', city: 'Douala', region: 'Littoral' },
-          { id: '2', type: 'ARTICLE', title: 'L\'importance de la vaccination', slug: 'importance-vaccination', excerpt: 'Article complet', city: null, region: null },
-        ]);
-      } else {
-        setResults([]);
-      }
+      // APPEL API
+      // On s'attend à recevoir un objet PublicSearchResponse
+      const response: PublicSearchResponse = await publicApi.search(q);
       
-      setSuggestions(['Cancer', 'Diabète', 'Paludisme', 'Vaccination']);
+      // Ici on accède à la propriété .data qui contient le tableau de résultats
+      setResults(response.data);
+      
+      // Suggestions
+      if (response.suggestions && response.suggestions.length > 0) {
+        setSuggestions(response.suggestions);
+      } else {
+        setSuggestions(['Cancer', 'Diabète', 'Paludisme', 'Vaccination']);
+      }
 
     } catch (error) {
       console.error("Erreur recherche", error);
@@ -320,15 +334,13 @@ export default function HeroSection() {
               </div>
 
               {/* Real-time Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              <div className=" hidden sm:grid  grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
                 <StatCard icon={Bell} color="teal" title={`${announcementsCount}`} subtitle="Annonces Actives" />
                 <StatCard icon={MapPin} color="blue" title={`${organizationsCount}`} subtitle="Hôpitaux & Cliniques" />
                 <StatCard icon={Users} color="purple" title={`${(usersCount / 1000).toFixed(1)}K`} subtitle="Utilisateurs" />
               </div>
             </div>
           </div> 
-          {/* <--- FIN DE LA COLONNE GAUCHE (Le div ici ferme bien le bloc texte avant l'image) */}
-
 
           {/* ==========================================
               2. COLONNE DROITE : Illustration
@@ -364,11 +376,6 @@ function StatCard({ icon: Icon, color, title, subtitle }: { icon: any; color: st
   };
 
   return (
-    /* 
-       AMÉLIORATION ICI :
-       - h-full : Force la carte à prendre toute la hauteur disponible dans la grille (uniformité verticale).
-       - flex flex-col : Organise le contenu de haut en bas proprement.
-    */
     <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-white/50 group h-full flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-xl ${colorMap[color]} group-hover:scale-110 transition-transform duration-300`}>

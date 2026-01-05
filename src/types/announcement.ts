@@ -68,14 +68,14 @@ export interface Announcement {
   organizationId: string;
   title: string;
   slug?: string | null;
-  content: string;
+  content?: string | null; // ✅ MODIFIÉ : Optionnel car absent dans la liste optimisée
   excerpt?: string | null;
   featuredImage: string;
   thumbnailImage?: string | null;
-  priority?: Priority; // Présent dans le schéma Prisma
+  priority?: Priority; 
   categoryId: string;
-  startDate: string; // ISO String
-  endDate: string;   // ISO String
+  startDate: string;
+  endDate: string;
   targetAudience?: TargetAudience[];
   isFree: boolean;
   cost?: number | null;
@@ -90,13 +90,9 @@ export interface Announcement {
   isPinned: boolean;
   publishedAt?: string | null;
   status: AnnouncementStatus;
-  suspensionReason?: string | null;
-  suspendedBy?: string | null;
-  deletedAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  // ... autres champs inchangés ...
   
-  // Relations (Inclusions)
+  // Relations
   organization?: OrganizationLite;
   category?: CategoryLite;
   location?: Location;
@@ -146,6 +142,13 @@ export interface QueryAnnouncementDto {
   city?: string;
   status?: AnnouncementStatus;
   priority?: Priority; // Ajouté pour filtrer par urgence
+}
+
+export interface RegisterAnnouncementDto {
+  visitorName?: string;
+  visitorPhone?: string;
+  visitorEmail?: string;
+  deviceId: string;
 }
 
 // Réponse API

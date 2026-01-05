@@ -28,7 +28,8 @@ export interface Advice {
   organizationId: string;
   categoryId: string;
   title: string;
-  content: string;
+  // ⚠️ CORRECTION : Rendu optionnel car non envoyé dans les listes (optimisation)
+  content?: string; 
   icon?: string | null;
   reactionsCount: number;
   priority: Priority;
@@ -42,21 +43,23 @@ export interface Advice {
   createdAt: Date;
   updatedAt: Date;
   
-  // Inclusions optionnelles
+  // Inclusions optionnelles (optimisées côté backend)
   organization?: {
     id: string;
     name: string;
     logo?: string | null;
     phone?: string | null;
+    city?: string; // Ajouté pour optimisation futur
   };
   category?: {
     id: string;
     name: string;
     slug?: string | null;
+    icon?: string; // Ajouté si besoin
   };
 }
 
-// DTOs pour les formulaires
+// DTOs pour les formulaires (Correspondance avec le Backend DTO)
 export interface CreateAdviceDto {
   categoryId: string;
   title: string;

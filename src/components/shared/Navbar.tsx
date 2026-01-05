@@ -52,7 +52,7 @@ export default function Navbar() {
             <Link href="/annonces" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Campagnes</Link>
             <Link href="/articles" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Articles</Link>
             <Link href="/conseils" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Conseils</Link>
-            <Link href="/hopitaux" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Hopitaux</Link>
+            <Link href="/hopitals" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">Hopitaux</Link>
           </nav>
 
           {/* Boutons Connexion/Inscription Desktop */}
@@ -87,7 +87,7 @@ export default function Navbar() {
             <Link href="/annonces" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Annonces</Link>
             <Link href="/articles" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Articles</Link>
             <Link href="/conseils" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Conseils</Link>
-            <Link href="/hopitaux" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Hopitaux</Link>
+            <Link href="/hopitals" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-teal-600 hover:bg-gray-50">Hopitaux</Link>
             <div className="pt-4 pb-2 border-t border-gray-200">
               <Link href="/auth/connexion" className="block px-3 py-2 rounded-md text-base font-medium text-teal-600 hover:text-teal-700 hover:bg-gray-50">Connexion</Link>
               <Link href="/auth/inscription" className="block px-3 py-2 mt-1 rounded-md text-base font-medium text-white bg-linear-to-r from-teal-500 via-emerald-500 to-cyan-600 hover:from-teal-600 hover:via-emerald-600 hover:to-cyan-700">Inscription</Link>

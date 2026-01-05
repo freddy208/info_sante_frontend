@@ -12,11 +12,14 @@ export enum ArticleStatus {
 }
 
 // Types simplifiés pour les relations (pour éviter l'import circulaire)
+
 export interface OrganizationLite {
   id: string;
   name: string;
   logo?: string | null;
   phone?: string | null;
+  // ✅ AJOUT CRITIQUE : Le backend envoie `isVerified` pour la confiance
+  isVerified: boolean; 
 }
 
 export interface CategoryLite {
@@ -96,6 +99,7 @@ export interface QueryArticleDto {
   status?: ArticleStatus;
   tags?: string[];
   featured?: boolean;
+  excludeId?: string;
 }
 
 // Réponse API

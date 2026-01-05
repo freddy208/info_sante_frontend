@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ✅ CORRECTION ICI : 'endpoints' et non 'endponts'
-import { organizationsApi } from '@/lib/api-endponts';
 import { 
   Organization, 
   OrganizationMember, 
@@ -17,7 +16,6 @@ import {
   OrganizationAuthResponse,
   RefreshTokenResponse
 } from '@/types/organization';
-import { toast } from 'react-hot-toast';
 import { 
   RegisterOrganizationFormData, 
   LoginOrganizationFormData, 
@@ -30,6 +28,11 @@ import {
 // =====================================
 // HOOKS POUR L'AUTHENTIFICATION
 // =====================================
+import { useMutation } from '@tanstack/react-query';
+import { organizationsApi } from '@/lib/api-endponts'; // Note: vérifiez le nom du fichier 'api-endpoints.ts' vs 'api-endponts.ts' dans votre import
+import { toast } from 'react-hot-toast';
+// Importez votre gestionnaire de stockage de tokens (exemple localStorage ou store Zustand)
+// import { saveAuthTokens } from '@/lib/auth-store'; 
 
 export const useRegisterOrganization = () => {
   const queryClient = useQueryClient();
@@ -37,11 +40,17 @@ export const useRegisterOrganization = () => {
   return useMutation({
     mutationFn: (data: RegisterOrganizationFormData) => organizationsApi.register(data),
     onSuccess: (data: OrganizationAuthResponse) => {
+      // ✅ CRITIQUE : Sauvegarder les tokens ici
+      localStorage.setItem('access_token', data.accessToken);
+      localStorage.setItem('refresh_token', data.refreshToken);
+      
+      // Si vous utilisez un store: saveAuthTokens(data);
+
       toast.success('Inscription réussie !');
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'profile'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors de l\'inscription');
+      toast.error(error.response?.data?.message || "Erreur lors de l'inscription");
     },
   });
 };
@@ -52,11 +61,15 @@ export const useLoginOrganization = () => {
   return useMutation({
     mutationFn: (data: LoginOrganizationFormData) => organizationsApi.login(data),
     onSuccess: (data: OrganizationAuthResponse) => {
+      // ✅ CRITIQUE : Sauvegarder les tokens ici
+      localStorage.setItem('access_token', data.accessToken);
+      localStorage.setItem('refresh_token', data.refreshToken);
+      
       toast.success('Connexion réussie !');
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'profile'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors de la connexion');
+      toast.error(error.response?.data?.message || "Erreur lors de la connexion");
     },
   });
 };
@@ -65,11 +78,15 @@ export const useRefreshOrganizationToken = () => {
   return useMutation({
     mutationFn: (refreshToken: string) => organizationsApi.refreshToken(refreshToken),
     onSuccess: (data: RefreshTokenResponse) => {
-      // Mettre à jour les tokens dans le store
+      // ✅ IMPORTANT : Mettre à jour les tokens
+      localStorage.setItem('access_token', data.accessToken);
+      localStorage.setItem('refresh_token', data.refreshToken);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors du rafraîchissement du token');
-      // Redirection vers login
+      // Si le refresh échoue, forcer la déconnexion
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/login'; // Redirection
     },
   });
 };

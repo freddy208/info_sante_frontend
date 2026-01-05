@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { Providers } from "./providers";
+import 'leaflet/dist/leaflet.css';
 
 // On n'importe plus "next/font". On utilisera la font définie dans globals.css (font-sans)
 // Cela évite l'erreur "Module not found" et le timeout de téléchargement.

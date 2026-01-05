@@ -6,14 +6,13 @@ import { motion } from 'framer-motion';
 import { Loader2, MoreHorizontal } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
-// ✅ CORRECTION ICI : Import sans faute de frappe
+// Imports API et Hooks
 import { useCategoriesList } from '@/hooks/useCategories';
-import { mockCategories } from '@/lib/mock-data';
 import { getCategoryIcon, getCategoryColor } from '@/components/home/utils/category-utils';
 
 export default function CategoriesGrid() {
   // ==========================================
-  // 1. RÉCUPÉRATION DES DONNÉES (API + FALLBACK)
+  // 1. RÉCUPÉRATION DES DONNÉES (API UNIQUEMENT)
   // ==========================================
   
   const { 
@@ -25,15 +24,8 @@ export default function CategoriesGrid() {
     parentOnly: true 
   });
 
-  // LOGIQUE SÉCURISÉE :
-  // 1. Si l'API répond (categoriesResponse existe) ET qu'il y a des données -> on prend l'API.
-  // 2. Sinon (Erreur, Chargement, ou API vide) -> on prend les mocks pour l'UI.
-  const categories = (categoriesResponse && categoriesResponse.data && categoriesResponse.data.length > 0)
-    ? categoriesResponse.data 
-    : mockCategories;
-
-  // Pour le compteur total, on préfère la donnée API si dispo, sinon la longueur du mock
-  const totalCategories = categoriesResponse?.meta?.total || categories.length;
+  // Utilisation directe des données de l'API
+  const categories = categoriesResponse?.data || [];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-linear-to-br from-gray-50 to-white relative overflow-hidden">
@@ -76,7 +68,7 @@ export default function CategoriesGrid() {
                 transition={{ duration: 0.5, delay: index * 0.05 }}
               >
                 <Link 
-                  href={`/categories/${category.slug || category.id}`} 
+                  href={`/annonces?categoryId=${category.id}`} 
                   className="group relative bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden block h-full"
                 >
                   {/* Overlay de couleur au survol */}
@@ -112,23 +104,6 @@ export default function CategoriesGrid() {
             ))}
           </div>
         )}
-
-        {/* Bouton "Voir tout" */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="text-center mt-12 sm:mt-16"
-        >
-          <Link 
-            href="/categories" 
-            className="inline-flex items-center px-6 py-3 bg-linear-to-r from-teal-600 to-blue-600 text-white font-semibold rounded-full hover:from-teal-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm sm:text-base"
-          >
-            Voir toutes les catégories
-            <MoreHorizontal className="ml-2 w-4 h-4" />
-          </Link>
-        </motion.div>
       </div>
     </section>
   );

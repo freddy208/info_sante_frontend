@@ -29,7 +29,7 @@ export interface Organization {
   id: string;
   name: string;
   email: string;
-  password: string; // 🔥 AJOUTÉ : Nécessaire pour l'inscription/connexion côté client avant l'envoi
+  //password: string; // 🔥 AJOUTÉ : Nécessaire pour l'inscription/connexion côté client avant l'envoi
   type: OrganizationType;
   phone: string;
   whatsapp?: string | null;

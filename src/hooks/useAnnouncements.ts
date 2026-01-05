@@ -7,7 +7,8 @@ import {
   CreateAnnouncementDto, 
   UpdateAnnouncementDto, 
   QueryAnnouncementDto,
-  PaginatedAnnouncementsResponse
+  PaginatedAnnouncementsResponse,
+  RegisterAnnouncementDto
 } from '@/types/announcement';
 import { toast } from 'react-hot-toast';
 import { 
@@ -35,6 +36,30 @@ export const useAnnouncement = (idOrSlug: string) => {
     queryKey: ['announcements', 'detail', idOrSlug],
     queryFn: () => announcementsApi.getAnnouncementById(idOrSlug),
     enabled: !!idOrSlug, // Ne lance la requête que si l'ID est fourni
+  });
+};
+
+// ✅ AJOUT : Hook d'inscription
+export const useRegisterAnnouncement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: RegisterAnnouncementDto }) => 
+      announcementsApi.register(id, data),
+    
+    onSuccess: (_, { id }) => {
+      toast.success('Inscription réussie !');
+      // 1. Invalider la liste pour mettre à jour les compteurs (places dispo)
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      // 2. Invalider le détail de l'annonce spécifique
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'detail', id] });
+    },
+    
+    onError: (error: any) => {
+      // Gestion des erreurs backend (ex: plus de places)
+      const message = error.response?.data?.message || "Erreur lors de l'inscription";
+      toast.error(message);
+    },
   });
 };
 

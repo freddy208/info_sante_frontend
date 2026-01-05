@@ -35,19 +35,30 @@ export interface PublicOrganization {
 // ==========================================
 // 3. Types pour la Recherche Globale
 // ==========================================
+// src/types/public.ts
+
+// ==========================================
+// 3. Types pour la Recherche Globale
+// ==========================================
 export interface SearchResultItem {
   id: string;
   title: string;
   type: 'ORGANIZATION' | 'ANNOUNCEMENT' | 'ARTICLE';
-  // D'autres champs optionnels selon le type...
+  
+  // CORRECTION SÉCURITÉ : Définition explicite des champs optionnels
+  // Cela évite d'avoir à utiliser "as any" dans le composant
   excerpt?: string;
-  cityName?: string;
+  slug?: string;
+  cityName?: string; // Pour les organisations
+  
+  // Autres métadonnées utiles
+  publishedAt?: string;
 }
 
 export interface PublicSearchResponse {
   status: 'success' | 'empty';
   data: SearchResultItem[];
-  suggestions?: string[]; // Présent uniquement si status === 'empty'
+  suggestions?: string[];
 }
 
 
@@ -58,5 +69,7 @@ export interface PublicSearchResponse {
 export interface NearbyQueryDto {
   lat: number;
   lng: number;
+  limit?: number; 
   radius?: number; // Optionnel, le backend a une valeur par défaut (50km)
+  types?: string[]; // ✅ AJOUT DES TYPES
 }

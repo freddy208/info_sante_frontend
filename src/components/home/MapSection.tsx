@@ -8,31 +8,35 @@ import { mockHospitals } from '@/lib/mock-data';
 // Import dynamique de Leaflet pour éviter les erreurs de SSR
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>
+  loading: () => <div className="flex items-center justify-center h-full bg-gray-200 animate-pulse"><Loader2 className="h-8 w-8 animate-spin text-teal-600" /></div>
 });
 
 export default function MapSection() {
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Trouvez un hôpital près de chez vous</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
+          Trouvez un hôpital près de chez vous
+        </h2>
 
-        <div className="relative bg-gray-100 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg" style={{ height: '400px', minHeight: '300px' }}>
+        {/* Conteneur de la carte : HAUTEUR AUGMENTÉE */}
+        <div 
+          className="relative bg-gray-100 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg" 
+          style={{ height: '500px', minHeight: '350px' }} // ✅ AJUSTEMENT ICI : Hauteur augmentée à 500px
+        >
           <LeafletMap hospitals={mockHospitals} />
                 
           {/* Filtres */}
-          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md p-2 z-10">
-            <div className="flex flex-col space-y-2">
-              <button className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors">
-                Public
-              </button>
-              <button className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
-                Privé
-              </button>
-              <button className="px-3 py-1 text-sm font-medium bg-orange-100 text-orange-800 rounded hover:bg-orange-200 transition-colors">
-                Urgences 24/7
-              </button>
-            </div>
+          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md p-2 z-10 flex gap-2">
+            <button className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors">
+              Public
+            </button>
+            <button className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+              Privé
+            </button>
+            <button className="px-3 py-1 text-sm font-medium bg-orange-100 text-orange-800 rounded hover:bg-orange-200 transition-colors">
+              Urgences 24/7
+            </button>
           </div>
 
           {/* Barre de recherche */}

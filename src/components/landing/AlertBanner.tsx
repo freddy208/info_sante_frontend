@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,6 +7,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { publicApi } from "@/lib/api";
 import { PublicAlert } from "@/types/public";
+import Link from "next/link"; // ✅ IMPORT IMPORTANT
 
 export function AlertBanner() {
   const [alerts, setAlerts] = useState<PublicAlert[]>([]);
@@ -16,7 +18,6 @@ export function AlertBanner() {
     const fetchAlerts = async () => {
       try {
         setLoading(true);
-        // Maintenant 'data' est DIRECTEMENT un tableau grâce à la correction api.ts
         const data = await publicApi.getAlerts();
         setAlerts(data);
       } catch (err) {
@@ -26,11 +27,9 @@ export function AlertBanner() {
         setLoading(false);
       }
     };
-
     fetchAlerts();
   }, []);
 
-  // Configuration des styles
   const getAlertStyles = (level: string) => {
     if (level === 'critical') {
       return {
@@ -48,10 +47,10 @@ export function AlertBanner() {
     };
   };
 
-  // Loading Skeleton
   if (loading) {
     return (
       <section className="bg-slate-50 border-b border-slate-200 py-8">
+        {/* Skeleton inchangé */}
         <div className="container mx-auto px-4 flex justify-between items-center mb-6">
             <div className="h-6 w-48 bg-slate-200 rounded animate-pulse"></div>
             <div className="h-4 w-24 bg-slate-200 rounded animate-pulse"></div>
@@ -65,15 +64,10 @@ export function AlertBanner() {
     );
   }
 
-  // Si erreur ou pas d'alertes
-  if (error || alerts.length === 0) {
-    return null;
-  }
+  if (error || alerts.length === 0) return null;
 
   return (
     <section className="bg-slate-50 border-b border-slate-200 py-8 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-64 h-64 bg-primary opacity-[0.02] rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -88,10 +82,10 @@ export function AlertBanner() {
             </div>
           </div>
           
-          <button className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors group">
+          <Link href="/annonces" className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors group">
             Voir toutes les alertes
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
+          </Link>
         </div>
 
         {/* Grille */}
@@ -100,47 +94,54 @@ export function AlertBanner() {
             const styles = getAlertStyles(alert.level);
             const Icon = alert.level === 'critical' ? AlertTriangle : AlertCircle;
 
+            // ✅ CONSTRUCTION DE L'URL DE DÉTAIL
+            const detailUrl = alert.type === 'ANNOUNCEMENT' 
+              ? `/annonces/${alert.slug || alert.id}` 
+              : `/articles/${alert.slug || alert.id}`;
+
             return (
-              <motion.div
-                key={alert.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0 }}
-                whileHover={{ y: -4 }}
-                className={`relative bg-white rounded-2xl p-5 shadow-sm transition-all duration-300 cursor-default group ${styles.border} ${styles.shadow}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${styles.iconBg} transition-transform group-hover:scale-110 duration-300`}>
-                    <Icon className="w-6 h-6" strokeWidth={2.5} />
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${styles.badgeBg}`}>
-                        {alert.level === 'critical' ? 'URGENCE' : 'ATTENTION'}
-                      </span>
-                      <div className="flex items-center gap-1 text-slate-400">
-                        <Clock className="w-3 h-3" />
-                        <span className="text-xs">{alert.date}</span>
-                      </div>
+              // ✅ WRAP DANS LINK POUR RENDRE CLICABLE
+              <Link href={detailUrl} key={alert.id} className="block">
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  className={`relative bg-white rounded-2xl p-5 shadow-sm transition-all duration-300 cursor-pointer group ${styles.border} ${styles.shadow}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${styles.iconBg} transition-transform group-hover:scale-110 duration-300`}>
+                      <Icon className="w-6 h-6" strokeWidth={2.5} />
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900 mb-1">{alert.title}</h3>
-                    
-                    <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-                      {alert.excerpt}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
-                      <div className="flex items-center gap-1.5 text-slate-900 font-medium text-xs">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        {alert.location}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${styles.badgeBg}`}>
+                          {alert.level === 'critical' ? 'URGENCE' : 'ATTENTION'}
+                        </span>
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <Clock className="w-3 h-3" />
+                          <span className="text-xs">{alert.date}</span>
+                        </div>
                       </div>
-                      <Button variant="ghost" className="h-7 px-3 text-xs font-semibold hover:bg-slate-50">Détails</Button>
+
+                      <h3 className="text-base font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{alert.title}</h3>
+                      
+                      <p className="text-sm text-slate-600 mb-3 leading-relaxed">
+                        {alert.excerpt}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5 text-slate-900 font-medium text-xs">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          {alert.location}
+                        </div>
+                        {/* Indicateur visuel de clic */}
+                        <span className="text-xs text-blue-500 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                          Lire la suite <ArrowRight className="w-3 h-3 inline ml-1"/>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </Link>
             );
           })}
         </div>

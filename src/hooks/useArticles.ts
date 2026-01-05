@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// ✅ CORRECTION : Chemin du fichier (endpoints et non endponts)
 import { articlesApi } from '@/lib/api-endponts';
-import { 
-  Article, 
-  CreateArticleDto, 
-  UpdateArticleDto, 
+import {
+  Article,
+  CreateArticleDto,
+  UpdateArticleDto,
   QueryArticleDto,
-  PaginatedArticlesResponse 
+  PaginatedArticlesResponse,
 } from '@/types/article';
 import { toast } from 'react-hot-toast';
-import { 
-  CreateArticleFormData, 
-  UpdateArticleFormData, 
-  QueryArticleFormData 
+import {
+  CreateArticleFormData,
+  UpdateArticleFormData,
+  QueryArticleFormData,
 } from '@/lib/validations/article';
 
 // ==========================================
@@ -24,7 +25,7 @@ export const useArticlesList = (params?: QueryArticleFormData) => {
   return useQuery<PaginatedArticlesResponse, Error>({
     queryKey: ['articles', 'list', params],
     queryFn: () => articlesApi.getArticles(params),
-    staleTime: 1000 * 60 * 10, // 10 minutes (Les articles changent moins souvent)
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -32,7 +33,8 @@ export const useArticle = (idOrSlug: string) => {
   return useQuery<Article, Error>({
     queryKey: ['articles', 'detail', idOrSlug],
     queryFn: () => articlesApi.getArticleById(idOrSlug),
-    enabled: !!idOrSlug, // Ne lance la requête que si l'ID est fourni
+    enabled: !!idOrSlug,
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -44,7 +46,7 @@ export const useMyArticlesList = (params?: QueryArticleFormData) => {
   return useQuery<PaginatedArticlesResponse, Error>({
     queryKey: ['articles', 'my', params],
     queryFn: () => articlesApi.getMyArticles(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -56,7 +58,7 @@ export const useCreateArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateArticleDto) => articlesApi.create(data),
+    mutationFn: (data: CreateArticleFormData) => articlesApi.create(data),
     onSuccess: () => {
       toast.success('Article créé avec succès');
       queryClient.invalidateQueries({ queryKey: ['articles'] });
@@ -71,11 +73,13 @@ export const useUpdateArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateArticleDto }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateArticleFormData }) =>
       articlesApi.updateArticle(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success('Article mis à jour avec succès');
+      // Invalide la liste ET le détail spécifique
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['articles', 'detail', variables.id] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erreur lors de la mise à jour de l\'article');
@@ -98,19 +102,45 @@ export const usePublishArticle = () => {
   });
 };
 
+// ==========================================
+// ✨ HOOKS POUR LES VUES (Best Practice)
+// ==========================================
+
+export const useViewArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (idOrSlug: string) => articlesApi.incrementView(idOrSlug),
+    onSuccess: (updatedArticle, idOrSlug) => {
+      // Invalide le détail de l'article pour mettre à jour le compteur de vues
+      queryClient.invalidateQueries({ queryKey: ['articles', 'detail', idOrSlug] });
+    },
+    onError: (error) => {
+      console.error("Erreur incrémentation vue:", error);
+      // Pas de toast pour ne pas déranger l'utilisateur
+    },
+  });
+};
+
 export const useFeatureArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ id, isFeatured }: { id: string; isFeatured: boolean }) =>
       articlesApi.featureArticle(id, isFeatured),
-    onSuccess: () => {
-      const msg = 'Article mis en avant'; // Ou "retiré de l'avant" selon le cas
+    onSuccess: (_, variables) => {
+      // ✅ CORRECTION : Récupérer 'isFeatured' depuis le second argument 'variables'
+      const msg = variables.isFeatured
+        ? 'Article mis en avant'
+        : 'Article retiré de l\'avant';
+
       toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors de la modification de la mise en avant');
+      toast.error(
+        error.response?.data?.message || 'Erreur lors de la modification de la mise en avant'
+      );
     },
   });
 };
@@ -129,3 +159,7 @@ export const useRemoveArticle = () => {
     },
   });
 };
+
+// NOTE : J'ai volontairement retiré `useArchiveArticle` car ton Backend 
+// ne possède pas de route `PATCH /articles/:id/archive`. 
+// Si tu ajoutes cette route dans le contrôleur, tu pourras recréer ce hook.

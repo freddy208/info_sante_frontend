@@ -1,5 +1,5 @@
 
-import { AnnouncementStatus, TargetAudience } from '@/types/announcement';
+import { AnnouncementStatus, Priority, TargetAudience } from '@/types/announcement';
 import { ArticleStatus } from '@/types/article';
 import { OrganizationType } from '@/types';
 
@@ -178,6 +178,7 @@ export const mockAnnouncements = [
     excerpt: 'Vaccinez vos enfants contre la poliomyélite dans les centres de santé de votre région.',
     featuredImage: 'vaccination-campaign',
     thumbnailImage: 'vaccination-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '1',
     startDate: '2025-08-15',
     endDate: '2025-08-20',
@@ -229,6 +230,7 @@ export const mockAnnouncements = [
     excerpt: 'Un dépistage précoce peut sauver des vies. Venez faire votre examen gratuitement.',
     featuredImage: 'breast-cancer-screening',
     thumbnailImage: 'breast-cancer-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '6',
     startDate: '2025-08-18',
     endDate: '2025-08-25',
@@ -280,6 +282,7 @@ export const mockAnnouncements = [
     excerpt: 'Protégez votre famille contre le paludisme avec des moustiquaires imprégnées.',
     featuredImage: 'mosquito-nets',
     thumbnailImage: 'mosquito-nets-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '3',
     startDate: '2025-08-22',
     endDate: '2025-08-30',
@@ -331,6 +334,7 @@ export const mockAnnouncements = [
     excerpt: 'Un suivi régulier pendant la grossesse est essentiel pour la santé de la mère et du bébé.',
     featuredImage: 'prenatal-care',
     thumbnailImage: 'prenatal-care-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '4',
     startDate: '2025-08-25',
     endDate: '2025-08-27',
@@ -382,6 +386,7 @@ export const mockAnnouncements = [
     excerpt: 'Apprenez à prévenir et à gérer le diabète pour une meilleure qualité de vie.',
     featuredImage: 'diabetes-awareness',
     thumbnailImage: 'diabetes-awareness-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '7',
     startDate: '2025-08-28',
     endDate: '2025-08-28',
@@ -433,6 +438,7 @@ export const mockAnnouncements = [
     excerpt: 'L\'hypertension est souvent silencieuse. Faites vérifier votre tension artérielle gratuitement.',
     featuredImage: 'blood-pressure-check',
     thumbnailImage: 'blood-pressure-check-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '8',
     startDate: '2025-09-02',
     endDate: '2025-09-05',
@@ -484,6 +490,7 @@ export const mockAnnouncements = [
     excerpt: 'Une bonne nutrition est essentielle pour la croissance et le développement de votre enfant.',
     featuredImage: 'child-nutrition',
     thumbnailImage: 'child-nutrition-thumb',
+    priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '5',
     startDate: '2025-09-08',
     endDate: '2025-09-10',
@@ -535,6 +542,7 @@ export const mockAnnouncements = [
     excerpt: 'Le dépistage est le premier pas vers une prise en charge efficace. Faites-vous dépister.',
     featuredImage: 'hiv-awareness',
     thumbnailImage: 'hiv-awareness-thumb',
+     priority: Priority.HIGH, // ✅ AJOUTÉ
     categoryId: '2',
     startDate: '2025-09-15',
     endDate: '2025-09-15',

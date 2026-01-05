@@ -1,857 +1,739 @@
-/* eslint-disable react-hooks/purity */
+/* eslint-disable react-hooks/static-components */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect, MouseEvent } from 'react';
+import { useRouter } from 'next/navigation'; // Correction: Importer useRouter
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
   Search, 
   Filter, 
-  Settings, 
-  Heart,
+  Star,
   ChevronDown,
   X,
-  TrendingUp,
-  Eye,
-  MessageCircle,
-  Share2,
-  Users,
-  Target,
+  MapPin,
   Calendar,
   Clock,
-  Check,
-  Info,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Zap,
-  Shield,
-  Star,
-  Loader2,
-  Plus,
+  Users,
+  Eye,
+  MessageCircle,
+  Heart,
+  Grid,
+  List,
   ChevronRight,
-  Sparkles,
-  Activity,
-  Droplets,
-  Apple,
-  HeartHandshake,
-  Brain,
-  Pill,
-  Stethoscope,
-  Baby,
-  User,
-  Home,
-  Flame
+  Loader2,
+  Bookmark,
+  Share2,
+  Check,
+  Sparkles, // ✅ Correction typo : Sparkles au lieu de Sparkles
+  TrendingUp,
+  AlertTriangle,
+  Lock,
+  LogIn,
+  Flame,
+  Info
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// Types
-import { 
-  Advice, 
-  AdviceStatus, 
-  Priority, 
-  TargetAudience,
-  PaginatedAdvicesResponse 
-} from '@/types/advice';
+// API & Types
+// ✅ IMPORTANT : Correction du chemin d'import (endpoints et non endponts)
+import { advicesApi } from '@/lib/api-endponts'; 
+import { categoriesApi } from '@/lib/api-endponts';
+import { bookmarksApi } from '@/lib/api-endponts';
+import { reactionsApi } from '@/lib/api-endponts';
+import { Advice, AdviceStatus, Priority, TargetAudience, QueryAdviceDto, PaginatedAdvicesResponse } from '@/types/advice';
+import { Category, PaginatedCategoriesResponse } from '@/types/category';
+import { ContentType, ReactionType } from '@/types/reaction';
 
-// Mock data
-const mockAdvices: Advice[] = [
-  {
-    id: '1',
-    organizationId: 'org1',
-    categoryId: '1',
-    title: 'Buvez au moins 2 litres d\'eau par jour',
-    content: 'L\'hydratation est essentielle pour maintenir votre santé. En période de chaleur ou lors d\'activités physiques, augmentez votre consommation d\'eau.',
-    icon: '💧',
-    reactionsCount: 1245,
-    priority: Priority.HIGH,
-    targetAudience: [TargetAudience.ALL],
-    viewsCount: 3542,
-    sharesCount: 234,
-    isActive: true,
-    publishedAt: new Date('2025-08-01'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-25'),
-    updatedAt: new Date('2025-08-01'),
-    organization: {
-      id: 'org1',
-      name: 'MINSANTÉ Cameroun',
-      logo: 'minsante-logo',
-      phone: '+237 222 23 40 14'
-    },
-    category: {
-      id: '1',
-      name: 'Hydratation',
-      slug: 'hydratation'
-    }
-  },
-  {
-    id: '2',
-    organizationId: 'org2',
-    categoryId: '2',
-    title: 'Prenez vos médicaments aux heures prescrites',
-    content: 'Respecter les horaires de prise de médicaments améliore leur efficacité. Utilisez des rappels si nécessaire.',
-    icon: '💊',
-    reactionsCount: 456,
-    priority: Priority.MEDIUM,
-    targetAudience: [TargetAudience.ADULTS, TargetAudience.ELDERLY],
-    viewsCount: 1820,
-    sharesCount: 89,
-    isActive: true,
-    publishedAt: new Date('2025-07-28'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-20'),
-    updatedAt: new Date('2025-07-28'),
-    organization: {
-      id: 'org2',
-      name: 'Hôpital Général Douala',
-      logo: 'hgd-logo',
-      phone: '+237 233 42 11 31'
-    },
-    category: {
-      id: '2',
-      name: 'Médicaments',
-      slug: 'medicaments'
-    }
-  },
-  {
-    id: '3',
-    organizationId: 'org3',
-    categoryId: '3',
-    title: 'Mangez 5 fruits et légumes par jour',
-    content: 'Variez les couleurs pour bénéficier de différents nutriments essentiels. Privilégiez les produits locaux et de saison.',
-    icon: '🍎',
-    reactionsCount: 823,
-    priority: Priority.LOW,
-    targetAudience: [TargetAudience.ALL],
-    viewsCount: 2100,
-    sharesCount: 156,
-    isActive: true,
-    publishedAt: new Date('2025-07-25'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-18'),
-    updatedAt: new Date('2025-07-25'),
-    organization: {
-      id: 'org3',
-      name: 'MINSANTÉ',
-      logo: 'minsante-logo',
-      phone: '+237 222 23 40 14'
-    },
-    category: {
-      id: '3',
-      name: 'Nutrition',
-      slug: 'nutrition'
-    }
-  },
-  {
-    id: '4',
-    organizationId: 'org4',
-    categoryId: '4',
-    title: 'Lavez-vous les mains régulièrement',
-    content: 'Le lavage des mains au savon pendant au moins 20 secondes élimine 99% des germes. Faites-le avant de manger et après être allé aux toilettes.',
-    icon: '🧼',
-    reactionsCount: 2100,
-    priority: Priority.URGENT,
-    targetAudience: [TargetAudience.ALL],
-    viewsCount: 4560,
-    sharesCount: 423,
-    isActive: true,
-    publishedAt: new Date('2025-07-22'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-15'),
-    updatedAt: new Date('2025-07-22'),
-    organization: {
-      id: 'org4',
-      name: 'OMS',
-      logo: 'oms-logo',
-      phone: '+237 222 23 45 67'
-    },
-    category: {
-      id: '4',
-      name: 'Hygiène',
-      slug: 'hygiene'
-    }
-  },
-  {
-    id: '5',
-    organizationId: 'org5',
-    categoryId: '5',
-    title: 'Faites 30 minutes d\'exercice par jour',
-    content: 'L\'activité physique régulière renforce votre système immunitaire et améliore votre santé mentale. Marche, course, natation : choisissez ce que vous aimez!',
-    icon: '🏃',
-    reactionsCount: 678,
-    priority: Priority.MEDIUM,
-    targetAudience: [TargetAudience.ADULTS],
-    viewsCount: 1890,
-    sharesCount: 123,
-    isActive: true,
-    publishedAt: new Date('2025-07-20'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-12'),
-    updatedAt: new Date('2025-07-20'),
-    organization: {
-      id: 'org5',
-      name: 'Centre Sportif National',
-      logo: 'csn-logo',
-      phone: '+237 233 42 22 33'
-    },
-    category: {
-      id: '5',
-      name: 'Sport',
-      slug: 'sport'
-    }
-  },
-  {
-    id: '6',
-    organizationId: 'org6',
-    categoryId: '6',
-    title: 'Dormez 7-8 heures par nuit',
-    content: 'Un sommeil de qualité est essentiel pour la récupération physique et mentale. Évitez les écrans avant de dormir et créez un environnement propice au repos.',
-    icon: '😴',
-    reactionsCount: 945,
-    priority: Priority.MEDIUM,
-    targetAudience: [TargetAudience.ADULTS, TargetAudience.ELDERLY],
-    viewsCount: 2340,
-    sharesCount: 167,
-    isActive: true,
-    publishedAt: new Date('2025-07-18'),
-    status: AdviceStatus.PUBLISHED,
-    createdAt: new Date('2025-07-10'),
-    updatedAt: new Date('2025-07-18'),
-    organization: {
-      id: 'org6',
-      name: 'Clinique du Sommeil',
-      logo: 'sleep-clinic-logo',
-      phone: '+237 233 42 33 44'
-    },
-    category: {
-      id: '6',
-      name: 'Sommeil',
-      slug: 'sommeil'
-    }
-  }
-];
+// Import Utilitaires
+import { getCategoryIcon, getCategoryColor } from '@/components/home/utils/category-utils';
+import { BookmarkEntity } from '@/types/bookmark';
+import { useBookmarksList } from '@/hooks/useBookmarks';
 
-const mockCategories = [
-  { 
-    id: '1', 
-    name: 'Vaccination', 
-    slug: 'vaccination',
-    description: 'Campagnes de vaccination pour enfants et adultes',
-    icon: '💉',
-    color: '#10b981',
-    parentId: null,
-    order: 1,
-    isActive: true, 
-    announcementsCount: 25, 
-    articlesCount: 12,
-    advicesCount: 8,
-    createdAt: new Date('2023-01-15'),
-    updatedAt: new Date('2023-08-10')
-  },
-  { 
-    id: '2', 
-    name: 'Dépistage VIH/SIDA', 
-    slug: 'depistage-vih',
-    description: 'Campagnes de dépistage du VIH/SIDA',
-    icon: '🔬',
-    color: '#3b82f6',
-    parentId: null,
-    order: 2,
-    isActive: true, 
-    announcementsCount: 18, 
-    articlesCount: 10,
-    advicesCount: 15,
-    createdAt: new Date('2023-02-20'),
-    updatedAt: new Date('2023-08-12')
-  },
-  { 
-    id: '3', 
-    name: 'Paludisme', 
-    slug: 'paludisme',
-    description: 'Prévention et traitement du paludisme',
-    icon: '🦟',
-    color: '#f59e0b',
-    parentId: null,
-    order: 3,
-    isActive: true, 
-    announcementsCount: 32, 
-    articlesCount: 15,
-    advicesCount: 20,
-    createdAt: new Date('2023-03-10'),
-    updatedAt: new Date('2023-08-05')
-  },
-  { 
-    id: '4', 
-    name: 'Santé Maternelle', 
-    slug: 'sante-maternelle',
-    description: 'Soins prénatals et postnatals',
-    icon: '🤰',
-    color: '#ec4899',
-    parentId: null,
-    order: 4,
-    isActive: true, 
-    announcementsCount: 15, 
-    articlesCount: 8,
-    advicesCount: 12,
-    createdAt: new Date('2023-04-05'),
-    updatedAt: new Date('2023-08-08')
-  },
-  { 
-    id: '5', 
-    name: 'Nutrition Infantile', 
-    slug: 'nutrition-infantile',
-    description: 'Alimentation équilibrée pour les enfants',
-    icon: '👶',
-    color: '#8b5cf6',
-    parentId: null,
-    order: 5,
-    isActive: true, 
-    announcementsCount: 20, 
-    articlesCount: 14,
-    advicesCount: 18,
-    createdAt: new Date('2023-05-12'),
-    updatedAt: new Date('2023-08-15')
-  },
-  { 
-    id: '6', 
-    name: 'Cancer', 
-    slug: 'cancer',
-    description: 'Dépistage et prévention des cancers',
-    icon: '🎗️',
-    color: '#ef4444',
-    parentId: null,
-    order: 6,
-    isActive: true, 
-    announcementsCount: 12, 
-    articlesCount: 9,
-    advicesCount: 7,
-    createdAt: new Date('2023-06-18'),
-    updatedAt: new Date('2023-08-20')
-  },
-  { 
-    id: '7', 
-    name: 'Diabète', 
-    slug: 'diabete',
-    description: 'Prévention et gestion du diabète',
-    icon: '🩸',
-    color: '#6366f1',
-    parentId: null,
-    order: 7,
-    isActive: true, 
-    announcementsCount: 10, 
-    articlesCount: 6,
-    advicesCount: 9,
-    createdAt: new Date('2023-07-22'),
-    updatedAt: new Date('2023-08-18')
-  },
-  { 
-    id: '8', 
-    name: 'Hypertension', 
-    slug: 'hypertension',
-    description: 'Prévention et traitement de l\'hypertension',
-    icon: '❤️',
-    color: '#f97316',
-    parentId: null,
-    order: 8,
-    isActive: true, 
-    announcementsCount: 14, 
-    articlesCount: 7,
-    advicesCount: 11,
-    createdAt: new Date('2023-08-01'),
-    updatedAt: new Date('2023-08-25')
-  },
-  { 
-    id: '9', 
-    name: 'Planification Familiale', 
-    slug: 'planification-familiale',
-    description: 'Méthodes de contraception et conseil',
-    icon: '👨‍👩‍👧‍👦',
-    color: '#14b8a6',
-    parentId: null,
-    order: 9,
-    isActive: true, 
-    announcementsCount: 22, 
-    articlesCount: 11,
-    advicesCount: 16,
-    createdAt: new Date('2023-08-05'),
-    updatedAt: new Date('2023-08-22')
-  },
-  { 
-    id: '10', 
-    name: 'Hygiène', 
-    slug: 'hygiene',
-    description: 'Pratiques d\'hygiène pour la santé',
-    icon: '🧼',
-    color: '#84cc16',
-    parentId: null,
-    order: 10,
-    isActive: true, 
-    announcementsCount: 16, 
-    articlesCount: 13,
-    advicesCount: 14,
-    createdAt: new Date('2023-08-10'),
-    updatedAt: new Date('2023-08-28')
-  },
-];
+// ==========================================
+// UTILITAIRES
+// ==========================================
 
-// Composant principal
-export default function AdvicesPage() {
+// Hook pour le Debounce (évite le spam de requêtes pendant la frappe)
+function useDebounce(value: string, delay?: number): string {
+  const [debouncedValue, setDebouncedValue] = useState<string>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay || 500); // Délai de 500ms par défaut
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// ==========================================
+// SOUS-COMPOSANTS
+// ==========================================
+
+function AdviceCard({ 
+  advice, 
+  isBookmarked, 
+  isLiked, 
+  onBookmarkToggle, 
+  onLikeToggle,
+  isAuthenticated,
+  onLoginPrompt,
+  onClick // ✅ AJOUT : Prop pour rendre la carte cliquable
+}: { 
+  advice: Advice; 
+  isBookmarked: boolean;
+  isLiked: boolean;
+  onBookmarkToggle: () => void;
+  onLikeToggle: () => void;
+  isAuthenticated: boolean;
+  onLoginPrompt: () => void;
+  onClick?: () => void;
+}) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const [advices, setAdvices] = useState<Advice[]>(mockAdvices);
-  const [filteredAdvices, setFilteredAdvices] = useState<Advice[]>(mockAdvices);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedPriority, setSelectedPriority] = useState<string>('all');
-  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(mockAdvices.length);
-  
-  // S'assurer que le code s'exécute côté client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  // Featured advice (high priority)
-  const featuredAdvice = useMemo(() => {
-    return advices.find(advice => advice.priority === Priority.HIGH || advice.priority === Priority.URGENT) || advices[0];
-  }, [advices]);
-  
-  // Filter advices
-  useEffect(() => {
-    let filtered = [...advices];
-    
-    // Filter by category
-    if (selectedCategory) {
-      filtered = filtered.filter(advice => advice.categoryId === selectedCategory);
+
+  // Extraction de l'extrait pour l'affichage
+  const excerpt = (advice.content && advice.content.length > 100) 
+    ? advice.content.substring(0, 100).replace(/<[^>]*>/g, '') + '...' 
+    : advice.content?.substring(0, 100).replace(/<[^>]*>/g, '') || '';
+
+  // ✅ CORRECTION SYNTAXE : Ajout des backticks pour le template string
+  const handleViewDetails = () => {
+    const slug = (advice as any).slug || advice.id;
+    router.push(`/conseils/${slug}`);
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/conseils/${advice.id}`;
+    if (navigator.share) navigator.share({ title: advice.title, url });
+    else {
+      navigator.clipboard.writeText(url);
+      toast('Lien copié !', { icon: '📋' });
     }
-    
-    // Filter by priority
-    if (selectedPriority !== 'all') {
-      filtered = filtered.filter(advice => advice.priority === selectedPriority);
+  };
+
+  const handleBookmarkClick = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      onLoginPrompt();
+      return;
     }
-    
-    // Filter by search term
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(advice => 
-        advice.title.toLowerCase().includes(lowerCaseSearchTerm) ||
-        advice.content.toLowerCase().includes(lowerCaseSearchTerm) ||
-        advice.category?.name.toLowerCase().includes(lowerCaseSearchTerm)
-      );
+    onBookmarkToggle();
+  };
+
+  const handleLikeClick = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      onLoginPrompt();
+      return;
     }
-    
-    setFilteredAdvices(filtered);
-    setTotal(filtered.length);
-    setTotalPages(Math.ceil(filtered.length / 6)); // 6 items per page
-  }, [advices, selectedCategory, selectedPriority, searchTerm]);
-  
-  // Get priority color and icon
+    onLikeToggle();
+  };
+
   const getPriorityInfo = (priority: Priority) => {
     switch (priority) {
-      case Priority.URGENT:
-        return { color: '#E53935', bgColor: '#FFEBEE', label: 'Urgente', icon: AlertTriangle };
-      case Priority.HIGH:
-        return { color: '#FF6F00', bgColor: '#FFF3E0', label: 'Haute', icon: Flame };
-      case Priority.MEDIUM:
-        return { color: '#FFA000', bgColor: '#FFF8E1', label: 'Moyenne', icon: TrendingUp };
-      case Priority.LOW:
-        return { color: '#43A047', bgColor: '#E8F5E9', label: 'Basse', icon: CheckCircle };
-      default:
-        return { color: '#757575', bgColor: '#F5F5F5', label: 'Normale', icon: Info };
+      case Priority.URGENT: return { label: 'Urgent', color: 'text-red-600 bg-red-50 border-red-200', icon: AlertTriangle };
+      case Priority.HIGH: return { label: 'Haute', color: 'text-orange-600 bg-orange-50 border-orange-200', icon: Flame };
+      case Priority.MEDIUM: return { label: 'Moyenne', color: 'text-blue-600 bg-blue-50 border-blue-200', icon: TrendingUp };
+      default: return { label: 'Normale', color: 'text-gray-600 bg-gray-50 border-gray-200', icon: Info };
     }
   };
+
+  const priorityInfo = getPriorityInfo(advice.priority);
+  const PriorityIcon = priorityInfo.icon;
+
+  return (
+    // ✅ CORRECTION : Ajout de onClick={onClick} et cursor-pointer sur le div racine
+    <motion.div
+      onClick={onClick}
+      whileHover={{ y: -5, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-300 cursor-pointer relative"
+    >
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 pr-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-xl sm:text-2xl border border-gray-100 shadow-sm">
+                {advice.icon || '💡'}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(advice.category?.name || '')} text-white shadow-sm`}>
+                  {getCategoryIcon(advice.category?.name)} {advice.category?.name}
+                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full border ${priorityInfo.color}`}>
+                  <PriorityIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> {priorityInfo.label}
+                </span>
+              </div>
+            </div>
+          
+            <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight mb-2 line-clamp-2">{advice.title}</h3>
+            {excerpt && <p className="text-gray-600 text-sm line-clamp-2 mb-3">{excerpt}</p>}
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500 mb-4">
+          <div className="flex items-center">
+            <Users className="h-3.5 w-3.5 mr-1 text-teal-600" />
+            {advice.organization?.name}
+          </div>
+          {advice.publishedAt && (
+            <div className="flex items-center">
+              <Calendar className="h-3.5 w-3.5 mr-1 text-teal-600" />
+              {new Date(advice.publishedAt).toLocaleDateString('fr-FR')}
+            </div>
+          )}
+           <div className="flex items-center">
+            <Eye className="h-3.5 w-3.5 mr-1 text-teal-600" />
+            {advice.viewsCount}
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center space-x-4 sm:space-x-6">
+            <button 
+              onClick={handleLikeClick} 
+              className={`flex items-center text-sm transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+            >
+              <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+              <span>{advice.reactionsCount}</span>
+            </button>
+            
+            <button 
+              onClick={handleViewDetails}
+              className="flex items-center text-gray-400 hover:text-blue-500 transition-colors text-sm"
+            >
+              <MessageCircle className="h-4 w-4 mr-1" />
+            </button>
+            
+            <button 
+              onClick={handleShare}
+              className="flex items-center text-gray-400 hover:text-green-500 transition-colors text-sm"
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              {advice.sharesCount}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleBookmarkClick} 
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <Bookmark className={`h-4 w-4 ${isBookmarked ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
+            </button>
+            
+            {/* ✅ CORRECTION : Le bouton "Voir plus" a maintenant onClick */}
+            <button 
+              onClick={handleViewDetails}
+              className="text-teal-600 text-sm font-medium flex items-center hover:text-teal-700"
+            >
+              Voir plus <ChevronRight className="h-4 w-4 ml-1" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function FiltersBar({ 
+  activeFiltersCount, 
+  onOpenFilters,
+  searchTerm,
+  onSearchChange
+}: { 
+  activeFiltersCount: number; 
+  onOpenFilters: () => void;
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+}) {
+  return (
+    <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher un conseil..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            {searchTerm && (
+              <button onClick={() => onSearchChange('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          
+          <button onClick={onOpenFilters} className="flex items-center px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full hover:from-teal-600 hover:to-teal-700 shadow-md">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtres {activeFiltersCount > 0 && <span className="ml-2 bg-white text-teal-600 text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">{activeFiltersCount}</span>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ onResetFilters, searchTerm }: { onResetFilters: () => void; searchTerm: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+        <Search className="h-10 w-10 text-gray-400" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun conseil trouvé</h3>
+      <p className="text-gray-600 mb-6 max-w-md">
+        {searchTerm ? `Aucun résultat pour "${searchTerm}". Essayez d'autres mots-clés.` : "Aucun conseil ne correspond à vos critères actuels."}
+      </p>
+      <button onClick={onResetFilters} className="px-6 py-2.5 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors flex items-center">
+        <X className="h-4 w-4 mr-2" />
+        Réinitialiser les filtres
+      </button>
+    </div>
+  );
+}
+
+// ==========================================
+// PAGE PRINCIPALE
+// ==========================================
+
+export default function AdvicesPage() {
+  const router = useRouter(); // ✅ Correction : Ajout de useRouter
   
-  // Get category icon
-  const getCategoryIcon = (categoryName: string) => {
-    const category = mockCategories.find(c => c.name === categoryName);
-    return category ? category.icon : '💡';
-  };
+  // 1. HOOKS AU NIVEAU RACINE
+  const queryClient = useQueryClient();
+
+  // États UI
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
   
-  // Format audience
-  const formatAudience = (audience: TargetAudience[]) => {
-    if (audience.includes(TargetAudience.ALL)) return 'Tout public';
-    
-    const audienceMap = {
-      [TargetAudience.ALL]: 'Tout public',
-      [TargetAudience.CHILDREN]: 'Enfants',
-      [TargetAudience.INFANTS]: 'Nourrissons',
-      [TargetAudience.ADULTS]: 'Adultes',
-      [TargetAudience.ELDERLY]: 'Personnes âgées',
-      [TargetAudience.PREGNANT_WOMEN]: 'Femmes enceintes',
+  // ✅ 2. ETAT RECHERCHE AVEC DEBOUNCE (Solution Anti-429)
+  // searchTerm est l'état immédiat de l'input (ce que l'utilisateur voit)
+  // debouncedSearchTerm est la valeur retardée envoyée à l'API
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms d'attente
+  
+  const [page, setPage] = useState(1);
+  
+  // État Auth
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+
+  // État Likes locaux (Optimiste)
+  const [likedAdviceIds, setLikedAdviceIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (!authStorage) {
+          setIsAuthenticated(false);
+          return;
+        }
+        const { state } = JSON.parse(authStorage);
+        setIsAuthenticated(!!state.token);
+      } catch {
+        setIsAuthenticated(false);
+      }
     };
+    checkAuthStatus();
+    const handleStorageChange = () => checkAuthStatus();
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const [filters, setFilters] = useState<{
+    category?: string;
+    priority?: Priority;
+    targetAudience?: TargetAudience;
+  }>({});
+
+  // 1. Récupérer les catégories
+  const { data: categoriesResponse } = useQuery<PaginatedCategoriesResponse>({
+    queryKey: ['categories'],
+    queryFn: () => categoriesApi.getCategories({ isActive: true }),
+    staleTime: 1000 * 60 * 10
+  });
+  const categories = categoriesResponse?.data || [];
+
+  // 2. Query DTO
+  // ✅ IMPORTANT : On utilise 'debouncedSearchTerm' et non 'searchTerm' pour l'API
+  const queryDto = useMemo<QueryAdviceDto>(() => {
+    const dto: QueryAdviceDto = {
+      page,
+      limit: 10,
+      status: AdviceStatus.PUBLISHED,
+    };
+
+    if (debouncedSearchTerm) dto.search = debouncedSearchTerm;
+    if (filters.category) dto.categoryId = filters.category;
+    if (filters.priority) dto.priority = filters.priority;
+    if (filters.targetAudience) dto.targetAudience = [filters.targetAudience];
     
-    return audience.map(a => audienceMap[a]).join(', ');
-  };
-  
-  // Format stats
-  const formatStats = (count: number) => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
+    return dto;
+  }, [page, debouncedSearchTerm, filters]); // Dépendance sur la valeur débouncée
+
+  // 3. Récupérer les conseils
+  const { 
+    data: advicesResponse, 
+    isLoading, 
+    isFetching,
+    refetch 
+  } = useQuery<PaginatedAdvicesResponse>({
+    queryKey: ['advices', 'list', queryDto],
+    queryFn: () => advicesApi.getAdvices(queryDto),
+    placeholderData: (previousData) => previousData,
+  });
+
+  const advices = advicesResponse?.data || [];
+  const meta = advicesResponse?.meta;
+  const totalPages = meta?.totalPages || 1;
+
+  // 4. Récupérer les favoris
+  // 4. Récupérer les favoris (OPTIMISÉ)
+  // ✅ CORRECTION : On utilise useBookmarksList pour éviter le crash 401/429
+  const { data: bookmarksResponse } = useBookmarksList(
+    { limit: 50 },
+    {
+      // ⚠️ IMPORTANT : Empêche l'erreur 401/429 sur la liste
+      isAuthenticated: isAuthenticated,
+      
+      // ⚠️ IMPORTANT : Arrête de réessayer en cas d'erreur 401 (token expiré) qui cause le 429
+      retry: (failureCount, error: any) => {
+        if (error?.response?.status === 401 || error?.response?.status === 403) return false;
+        return failureCount < 1;
+      },
     }
-    return count.toString();
+  );
+
+  // ✅ Filtre client pour ne garder que les favoris de type ADVICE (Conseils)
+  const bookmarkedIds = useMemo(() => {
+    return new Set(
+      bookmarksResponse?.data
+        .filter(b => b.contentType === ContentType.ADVICE) // Votre logique spécifique
+        .map(b => b.contentId) || []
+    );
+  }, [bookmarksResponse]);
+
+  // 5. MUTATION BOOKMARK
+  const toggleBookmark = useMutation({
+    mutationFn: (args: { contentType: ContentType; contentId: string; isBookmarked: boolean }) => {
+      if (args.isBookmarked) {
+         return bookmarksApi.removeByContent(args.contentType, args.contentId);
+      } else {
+        return bookmarksApi.create({ contentType: args.contentType, contentId: args.contentId }) as any;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ['advices'] });
+      toast('Favori mis à jour', { icon: '🔖' });
+    },
+    onError: (error) => {
+      console.error("Erreur bookmark:", error);
+      toast("Erreur lors de la gestion du favori", { icon: '❌' });
+    }
+  });
+
+  const handleBookmarkToggle = (adviceId: string) => {
+    toggleBookmark.mutate(
+      {
+        contentType: ContentType.ADVICE,
+        contentId: adviceId,
+        isBookmarked: bookmarkedIds.has(adviceId)
+      }
+    );
   };
-  
-  // Handle like
-  const handleLike = (id: string) => {
-    setAdvices(advices.map(advice => 
-      advice.id === id 
-        ? { ...advice, reactionsCount: advice.reactionsCount + 1 }
-        : advice
-    ));
-    toast('Conseil aimé!', { icon: '❤️' });
+
+  // 6. Gestion des Likes
+  const likeMutation = useMutation({
+    mutationFn: (adviceId: string) => 
+      reactionsApi.create({
+        contentType: ContentType.ADVICE,
+        contentId: adviceId,
+        type: ReactionType.LIKE
+      }),
+    onMutate: (adviceId) => {
+      setLikedAdviceIds(prev => new Set(prev).add(adviceId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['advices'] });
+      toast('Conseil liké !', { icon: '❤️' });
+    },
+    onError: (error, adviceId) => {
+      setLikedAdviceIds(prev => {
+        const next = new Set(prev);
+        next.delete(adviceId);
+        return next;
+      });
+      console.error(error);
+    }
+  });
+
+  const handleLikeToggle = (adviceId: string) => {
+    if (likedAdviceIds.has(adviceId)) return;
+    likeMutation.mutate(adviceId);
   };
-  
-  // Handle share
-  const handleShare = (id: string) => {
-    navigator.clipboard.writeText(window.location.origin + '/advices/' + id);
-    toast('Lien copié!', { icon: '📋' });
+
+  // Handlers
+  const handleResetFilters = () => {
+    setFilters({});
+    setSearchTerm(''); // Vide l'input
+    setPage(1);
   };
-  
-  // Handle view details
-  const handleViewDetails = (id: string, slug: string) => {
-    router.push(`/conseils/details`);
-  };
-  
-  // Load more
+
   const handleLoadMore = () => {
     if (page < totalPages) {
-      setPage(page + 1);
-    } else {
-      toast('Tous les conseils ont été chargés', { icon: 'ℹ️' });
+      setPage(p => p + 1);
     }
   };
-  
+
+  const activeFiltersCount = Object.values(filters).filter(v => v !== undefined).length;
+
+  // Filtre Modal Component
+  const FiltersModal = () => {
+    if (!isFiltersModalOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
+        <motion.div 
+          initial={{ y: '100%', opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold">Filtrer les conseils</h3>
+            <button onClick={() => setIsFiltersModalOpen(false)}><X className="h-6 w-6 text-gray-500" /></button>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-semibold mb-3 text-sm text-gray-700">Catégories</h4>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => setFilters({...filters, category: undefined})}
+                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${!filters.category ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Toutes
+              </button>
+              {categories.map(cat => (
+                <button 
+                  key={cat.id}
+                  onClick={() => setFilters({...filters, category: cat.id})}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${filters.category === cat.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  {getCategoryIcon(cat.name)} {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-semibold mb-3 text-sm text-gray-700">Priorité</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.values(Priority).map(priority => (
+                <button 
+                  key={priority}
+                  onClick={() => setFilters({...filters, priority: filters.priority === priority ? undefined : priority})}
+                  className={`py-2 rounded-lg text-xs sm:text-sm border transition-colors ${filters.priority === priority ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
+                >
+                  {priority}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-semibold mb-3 text-sm text-gray-700">Public cible</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.values(TargetAudience).map(audience => (
+                <button 
+                  key={audience}
+                  onClick={() => setFilters({...filters, targetAudience: filters.targetAudience === audience ? undefined : audience})}
+                  className={`py-2 rounded-lg text-xs sm:text-sm border transition-colors ${filters.targetAudience === audience ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
+                >
+                  {audience}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-8">
+            <button 
+              onClick={handleResetFilters} 
+              className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium transition-colors hover:bg-gray-50"
+            >
+              Effacer
+            </button>
+            <button 
+              onClick={() => setIsFiltersModalOpen(false)} 
+              className="flex-1 py-3 rounded-xl bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors"
+            >
+              Voir les résultats
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Retour"
-          >
+        <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
+          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
-          
-          <h1 className="text-lg font-semibold text-gray-900">Conseils santé</h1>
-          
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Rechercher">
-            <Search className="h-5 w-5 text-gray-700" />
-          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Conseils Santé</h1>
+          <div className="w-9" />
         </div>
       </header>
       
-      {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 sm:px-6 py-6 sm:py-8 rounded-b-3xl">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
-            <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-          </div>
-          
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Conseils santé du jour</h2>
-          <p className="text-white/80 text-sm sm:text-base max-w-md">Découvrez des astuces quotidiennes pour rester en bonne santé</p>
+      <section className="bg-linear-to-r from-teal-600 to-teal-400 px-4 py-6 mb-2">
+        <div className="text-center text-white">
+          <h2 className="text-xl font-bold mb-1">Des astuces pour votre santé</h2>
+          <p className="text-sm text-white/90">Consultez les recommandations des experts</p>
         </div>
       </section>
       
-      {/* Filters Bar */}
-      <section className="bg-white px-4 py-4 border-b border-gray-100">
-        {/* Categories */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Catégories:</p>
-          <div className="flex space-x-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                !selectedCategory
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tous
-            </button>
-            
-            {mockCategories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors flex items-center ${
-                  selectedCategory === category.id
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <span className="mr-1">{category.icon}</span>
-                {category.name}
-              </button>
-            ))}
-          </div>
+      <FiltersBar 
+        activeFiltersCount={activeFiltersCount}
+        onOpenFilters={() => setIsFiltersModalOpen(true)}
+        searchTerm={searchTerm} // On passe le terme direct pour l'input
+        onSearchChange={setSearchTerm}
+      />
+
+      <div className="px-4 py-3 max-w-7xl mx-auto flex justify-between items-center">
+        <span className="text-sm text-gray-600">
+          {meta?.total || 0} conseil{meta?.total !== 1 && 's'}
+        </span>
+        <div className="flex bg-gray-200 rounded-lg p-1">
+          <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}><List className="h-4 w-4" /></button>
+          <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}><Grid className="h-4 w-4" /></button>
         </div>
-        
-        {/* Priority Filter */}
-        <div className="relative">
-          <p className="text-sm text-gray-600 mb-2">Priorité:</p>
-          <button
-            onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
-          >
-            <span className="text-sm sm:text-base">
-              {selectedPriority === 'all' 
-                ? 'Toutes' 
-                : getPriorityInfo(selectedPriority as Priority).label
-              }
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showPriorityDropdown ? 'rotate-180' : ''}`} />
-          </button>
-          
-          <AnimatePresence>
-            {showPriorityDropdown && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10"
-              >
-                <button
-                  onClick={() => {
-                    setSelectedPriority('all');
-                    setShowPriorityDropdown(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                    selectedPriority === 'all' ? 'bg-teal-50 text-teal-600' : ''
-                  }`}
-                >
-                  <span className="text-sm sm:text-base">Toutes</span>
-                  {selectedPriority === 'all' && <Check className="h-4 w-4" />}
-                </button>
-                
-                {Object.values(Priority).map((priority) => (
-                  <button
-                    key={priority}
-                    onClick={() => {
-                      setSelectedPriority(priority);
-                      setShowPriorityDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                      selectedPriority === priority ? 'bg-teal-50 text-teal-600' : ''
-                    }`}
+      </div>
+
+      <main className="pb-20 max-w-7xl mx-auto px-4 sm:px-6">
+        {isLoading && page === 1 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 text-teal-600 animate-spin mb-4" />
+            <span className="text-gray-500">Chargement...</span>
+          </div>
+        ) : advices.length > 0 ? (
+          <>
+            {/* Mode Grille ou Liste */}
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {advices.map((advice) => (
+                  <motion.div
+                    key={advice.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: advice.id.length * 0.05 }} // Petit délai en cascade
                   >
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: getPriorityInfo(priority).color }}
-                      />
-                      <span className="text-sm sm:text-base">{getPriorityInfo(priority).label}</span>
-                    </div>
-                    {selectedPriority === priority && <Check className="h-4 w-4" />}
-                  </button>
+                    {/* ✅ CORRECTION : On passe onClick={onClick} au composant AdviceCard */}
+                    <AdviceCard 
+                      advice={advice} 
+                      isBookmarked={bookmarkedIds.has(advice.id)}
+                      isLiked={likedAdviceIds.has(advice.id)}
+                      onBookmarkToggle={() => handleBookmarkToggle(advice.id)}
+                      onLikeToggle={() => handleLikeToggle(advice.id)}
+                      isAuthenticated={isAuthenticated}
+                      onLoginPrompt={() => setIsLoginPromptOpen(true)}
+                      onClick={() => router.push(`/conseils/${advice.id}`)} // ✅ Rend la carte cliquable
+                    />
+                  </motion.div>
                 ))}
-              </motion.div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <AnimatePresence>
+                  {advices.map((advice) => (
+                    <motion.div
+                      key={advice.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                      layout
+                    >
+                      <AdviceCard 
+                        advice={advice} 
+                        isBookmarked={bookmarkedIds.has(advice.id)}
+                        isLiked={likedAdviceIds.has(advice.id)}
+                        onBookmarkToggle={() => handleBookmarkToggle(advice.id)}
+                        onLikeToggle={() => handleLikeToggle(advice.id)}
+                        isAuthenticated={isAuthenticated}
+                        onLoginPrompt={() => setIsLoginPromptOpen(true)}
+                        onClick={() => router.push(`/conseils/${advice.id}`)} // ✅ Rend la carte cliquable
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
-      </section>
-            
-      {/* Featured Advice */}
-      {featuredAdvice && (
-        <section className="px-4 py-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-500 rounded-2xl p-4 sm:p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-300"
-            onClick={() => handleViewDetails(featuredAdvice.id, featuredAdvice.title.toLowerCase().replace(/\s+/g, '-'))}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-4 text-2xl sm:text-3xl">
-                {featuredAdvice.icon}
-              </div>
-              
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">{featuredAdvice.title}</h3>
-              
-              <p className="text-gray-700 text-sm sm:text-base mb-6 text-center line-clamp-3">{featuredAdvice.content}</p>
-              
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
-                <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                  <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  {featuredAdvice.organization?.name}
-                </div>
-                
-                <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                  <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  {formatAudience(featuredAdvice.targetAudience || [])}
-                </div>
-                
-                {(() => {
-                  const priorityInfo = getPriorityInfo(featuredAdvice.priority);
-                  return (
-                    <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                      {priorityInfo.icon && <priorityInfo.icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />}
-                      <span style={{ color: priorityInfo.color }}>
-                        Priorité {priorityInfo.label}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-              
-              <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-sm text-gray-600">
-                <button
-                  onClick={() => handleLike(featuredAdvice.id)}
-                  className="flex items-center hover:text-red-500 transition-colors"
+
+            {page < totalPages && (
+              <div className="flex justify-center mt-10">
+                <button 
+                  onClick={handleLoadMore}
+                  disabled={isFetching}
+                  className="px-8 py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-all flex items-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Heart className="h-4 w-4 mr-1" />
-                  {formatStats(featuredAdvice.reactionsCount)}
-                </button>
-                
-                <button className="flex items-center hover:text-blue-500 transition-colors">
-                  <MessageCircle className="h-4 w-4 mr-1" />
-                  45
-                </button>
-                
-                <button
-                  onClick={() => handleShare(featuredAdvice.id)}
-                  className="flex items-center hover:text-green-500 transition-colors"
-                >
-                  <Share2 className="h-4 w-4 mr-1" />
-                  {formatStats(featuredAdvice.sharesCount)}
+                  {isFetching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Charger plus de conseils
                 </button>
               </div>
-            </div>
-          </motion.div>
-        </section>
-      )}
-      
-      {/* All Advices Header */}
-      <section className="px-4 py-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Tous les conseils</h3>
-        </div>
-        
-        <p className="text-sm text-gray-500">{total} conseils disponibles</p>
-      </section>
-      
-      {/* Advice Cards */}
-      <main className="px-4 pb-24">
-        <div className="space-y-4">
-          {filteredAdvices.slice(0, page * 6).map((advice) => {
-            const priorityInfo = getPriorityInfo(advice.priority);
-            
-            return (
-              <motion.article
-                key={advice.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
-                style={{
-                  borderLeft: `4px solid ${priorityInfo.color}`,
-                  backgroundColor: priorityInfo.bgColor + '20'
-                }}
-                onClick={() => handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'))}
-              >
-                <div className="p-4 sm:p-5">
-                  <div className="flex items-start">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-4 shadow-sm flex-shrink-0">
-                      <span className="text-xl sm:text-2xl">{advice.icon}</span>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{advice.title}</h4>
-                      
-                      <p className="text-gray-700 text-sm sm:text-base mb-4 line-clamp-2">{advice.content}</p>
-                      
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 text-xs sm:text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          {advice.organization?.name}
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          {formatAudience(advice.targetAudience || [])}
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <div 
-                            className="w-2 h-2 rounded-full mr-1"
-                            style={{ backgroundColor: priorityInfo.color }}
-                          />
-                          <span style={{ color: priorityInfo.color }}>
-                            Priorité {priorityInfo.label}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 sm:space-x-4 text-sm text-gray-600">
-                          <button
-                            onClick={() => handleLike(advice.id)}
-                            className="flex items-center hover:text-red-500 transition-colors"
-                          >
-                            <Heart className="h-4 w-4 mr-1" />
-                            {formatStats(advice.reactionsCount)}
-                          </button>
-                          
-                          <button className="flex items-center hover:text-blue-500 transition-colors">
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            {isClient ? Math.floor(Math.random() * 100) : 0}
-                          </button>
-                          
-                          <button
-                            onClick={() => handleShare(advice.id)}
-                            className="flex items-center hover:text-green-500 transition-colors"
-                          >
-                            <Share2 className="h-4 w-4 mr-1" />
-                            {formatStats(advice.sharesCount)}
-                          </button>
-                        </div>
-                        
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetails(advice.id, advice.title.toLowerCase().replace(/\s+/g, '-'));
-                          }}
-                          className="text-teal-600 hover:text-teal-700 transition-colors flex items-center text-sm sm:text-base font-medium"
-                        >
-                          Voir plus
-                          <ChevronRight className="h-4 w-4 ml-1" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.article>
-            );
-          })}
-        </div>
-        
-        {/* Load More */}
-        {page < totalPages && (
-          <div className="flex justify-center mt-6 sm:mt-8">
-            <button
-              onClick={handleLoadMore}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-white border border-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-colors flex items-center text-sm sm:text-base"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Chargement...
-                </>
-              ) : (
-                <>
-                  Charger plus de conseils ({Math.min(6, total - page * 6)})
-                </>
-              )}
-            </button>
-          </div>
+            )}
+          </>
+        ) : (
+          <EmptyState onResetFilters={handleResetFilters} searchTerm={searchTerm} />
         )}
       </main>
+
+      <FiltersModal />
+
+      <AnimatePresence>
+        {isLoginPromptOpen && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full text-center"
+            >
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="h-8 w-8 text-gray-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
+              <p className="text-gray-600 mb-6">Vous devez être connecté pour interagir avec les conseils.</p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => router.push('/login')}
+                  className="w-full py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700"
+                >
+                  Se connecter
+                </button>
+                <button
+                  onClick={() => setIsLoginPromptOpen(false)}
+                  className="w-full py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

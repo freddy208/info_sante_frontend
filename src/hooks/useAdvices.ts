@@ -1,22 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { advicesApi } from '@/lib/api-endponts';
+import { advicesApi } from '@/lib/api-endponts'; // Attention à la coquille ici dans ton import : "endponts" vs "endpoints" ?
 import { 
   Advice, 
   CreateAdviceDto, 
   UpdateAdviceDto, 
   QueryAdviceDto,
-  PaginatedAdvicesResponse,
-  Priority,
-  AdviceStats
+  Priority
 } from '@/types/advice';
 import { toast } from 'react-hot-toast';
 import { 
   CreateAdviceFormData, 
   UpdateAdviceFormData, 
   QueryAdviceFormData
-} from '@/lib/validations/advice';
+} from '@/lib/validations/advice'; // Assure-toi que ces types Zod matchent les DTOs ci-dessus
 
 // =====================================
 // HOOKS POUR LA LECTURE (public)
@@ -34,7 +32,7 @@ export const useAdvice = (id: string) => {
   return useQuery({
     queryKey: ['advices', 'detail', id],
     queryFn: () => advicesApi.getAdviceById(id),
-    enabled: !!id, // Ne lance la requête que si l'ID est fourni
+    enabled: !!id,
   });
 };
 
@@ -46,7 +44,7 @@ export const useMyAdvicesList = (params?: QueryAdviceDto) => {
   return useQuery({
     queryKey: ['advices', 'my', params],
     queryFn: () => advicesApi.getMyAdvices(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -54,7 +52,7 @@ export const useAdviceStats = () => {
   return useQuery({
     queryKey: ['advices', 'stats'],
     queryFn: () => advicesApi.getAdviceStats(),
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
   });
 };
 
@@ -79,9 +77,11 @@ export const useUpdateAdvice = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAdviceFormData }) =>
       advicesApi.updateAdvice(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success('Conseil mis à jour avec succès');
+      // Invalide la liste ET le détail spécifique
       queryClient.invalidateQueries({ queryKey: ['advices'] });
+      queryClient.invalidateQueries({ queryKey: ['advices', 'detail', variables.id] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erreur lors de la mise à jour du conseil');
@@ -125,8 +125,8 @@ export const useUpdateAdvicePriority = () => {
   return useMutation({
     mutationFn: ({ id, priority }: { id: string; priority: Priority }) =>
       advicesApi.updateAdvicePriority(id, priority),
-    onSuccess: (_, { priority }) => {
-      toast.success(`Priorité du conseil mise à jour : ${priority}`);
+    onSuccess: () => {
+      toast.success('Priorité mise à jour');
       queryClient.invalidateQueries({ queryKey: ['advices'] });
     },
     onError: (error: any) => {
