@@ -379,4 +379,8 @@ export const bookmarksApi = {
   // DELETE /bookmarks/content/:contentType/:contentId
   removeByContent: (contentType: string, contentId: string): Promise<{ message: string }> =>
     apiClient.delete(`/bookmarks/content/${contentType}/${contentId}`).then(res => res.data.data),
+
+  // ✅ AJOUT : Vérification par lot (Optimisation Page Liste)
+  checkMany: (contentType: string, contentIds: string[]): Promise<Record<string, boolean>> =>
+    apiClient.post('/bookmarks/check-many', { contentType, contentIds }).then(res => res.data.data),
 };

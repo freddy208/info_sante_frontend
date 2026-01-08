@@ -142,6 +142,8 @@ export interface QueryAnnouncementDto {
   city?: string;
   status?: AnnouncementStatus;
   priority?: Priority; // Ajouté pour filtrer par urgence
+  isFree?: boolean;
+  hasCapacity?: boolean;
 }
 
 export interface RegisterAnnouncementDto {

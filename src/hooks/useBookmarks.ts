@@ -162,4 +162,18 @@ export const useToggleBookmark = () => {
     mutate: toggle,
     isLoading: createMutation.isPending || removeMutation.isPending,
   };
+
+};
+export const useBookmarksCheck = (
+  contentType: ContentType,
+  contentIds: string[],
+  isAuthenticated: boolean
+) => {
+  return useQuery<Record<string, boolean>, Error>({
+    queryKey: ['bookmarks', 'check-batch', contentType, contentIds],
+    queryFn: () => bookmarksApi.checkMany(contentType, contentIds),
+    enabled: !!isAuthenticated && contentIds.length > 0,
+    staleTime: 1000 * 60 * 2, // 2 min
+    retry: 1,
+  });
 };

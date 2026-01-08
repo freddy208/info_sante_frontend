@@ -3,19 +3,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'; // ✅ AJOUT useCallback
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Activity, ArrowRight, Bell, Users, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
- import { useOrganizationsList } from '@/hooks/useOrganizations';
+import { useOrganizationsList } from '@/hooks/useOrganizations';
 import { useAnnouncementsList } from '@/hooks/useAnnouncements';
-
-// CORRECTION IMPORT : On importe depuis @/lib/api
 import { publicApi } from '@/lib/api';
 
 // ==========================================
-// 1. DÉFINITION DES TYPES (Locale pour éviter l'erreur d'import)
+// 1. DÉFINITION DES TYPES
 // ==========================================
 
 interface SearchResultItem {
@@ -28,7 +26,6 @@ interface SearchResultItem {
   region?: string | null;
 }
 
-// On redéfinit l'interface ici car l'import depuis @/types/public échoue chez toi
 interface PublicSearchResponse {
   status: 'success' | 'empty';
   data: SearchResultItem[];
@@ -54,9 +51,6 @@ export default function HeroSection() {
   // 3. DONNÉES RÉELLES (API) pour les Stats
   // ==========================================
   
-  // Assure-toi que ces hooks existent et sont importés correctement
- 
-  
   const { data: announcementsData } = useAnnouncementsList({ page: 1, limit: 1 });
   const announcementsCount = announcementsData?.meta?.total ?? 0;
 
@@ -65,12 +59,47 @@ export default function HeroSection() {
     (organizationsData as any)?.meta?.total || 
     (Array.isArray(organizationsData) ? organizationsData.length : 0);
 
-  const usersCount = 50000; 
+  // ✅ CORRECTION ERREUR 1 : Gestion du type pour usersCount
+  // Intl.NumberFormat renvoie un string (ex: "50 k"), on ne peut pas faire de division dessus.
+  // On le formate directement ici.
+  const usersCount = new Intl.NumberFormat('fr-FR', { 
+    notation: "compact", 
+    maximumFractionDigits: 1 
+  }).format(50000); 
 
   // ==========================================
-  // 4. LOGIQUE DE RECHERCHE (API RÉELLE)
+  // 4. LOGIQUE DE RECHERCHE (Optimisée)
   // ==========================================
 
+  // ✅ CORRECTION ERREUR 2 : Suppression de la duplication. 
+  // On ne garde que cette version optimisée avec useCallback.
+  const performSearch = useCallback(async (q: string) => {
+    if (isFetchingRef.current) return;
+    // 🔒 SÉCURITÉ : Nettoyage basique
+    const cleanQuery = q.trim().slice(0, 100); 
+    
+    isFetchingRef.current = true;
+    setLoading(true);
+
+    try {
+      const response: PublicSearchResponse = await publicApi.search(cleanQuery);
+      setResults(response.data);
+      
+      if (response.suggestions && response.suggestions.length > 0) {
+        setSuggestions(response.suggestions);
+      } else {
+        setSuggestions(['Vaccination', 'Diabète', 'Paludisme']);
+      }
+    } catch (error) {
+      console.error("Erreur recherche", error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, []); // Dépendances vides car tout est interne ou passé en argument
+
+  // ✅ EFFET OPTIMISÉ : Dépendance sur performSearch (stable grâce à useCallback)
   useEffect(() => {
     if (query.length === 0) {
       setResults(null);
@@ -86,7 +115,7 @@ export default function HeroSection() {
     }, 400);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query, isDropdownOpen]);
+  }, [query, performSearch, isDropdownOpen]); 
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -118,35 +147,6 @@ export default function HeroSection() {
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [isDropdownOpen]);
-
-  const performSearch = async (q: string) => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
-    setLoading(true);
-
-    try {
-      // APPEL API
-      // On s'attend à recevoir un objet PublicSearchResponse
-      const response: PublicSearchResponse = await publicApi.search(q);
-      
-      // Ici on accède à la propriété .data qui contient le tableau de résultats
-      setResults(response.data);
-      
-      // Suggestions
-      if (response.suggestions && response.suggestions.length > 0) {
-        setSuggestions(response.suggestions);
-      } else {
-        setSuggestions(['Cancer', 'Diabète', 'Paludisme', 'Vaccination']);
-      }
-
-    } catch (error) {
-      console.error("Erreur recherche", error);
-      setResults([]);
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
-  };
 
   const getLink = (item: SearchResultItem) => {
     if (item.type === 'ORGANIZATION') return `/organizations/${item.id}`;
@@ -182,9 +182,7 @@ export default function HeroSection() {
         {/* GRID CONTAINER : 2 Colonnes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 md:items-start">
           
-          {/* ==========================================
-              1. COLONNE GAUCHE : Texte, Recherche, Stats
-              ========================================== */}
+          {/* COLONNE GAUCHE : Texte, Recherche, Stats */}
           <div className="text-white space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -334,17 +332,17 @@ export default function HeroSection() {
               </div>
 
               {/* Real-time Stats Cards */}
-              <div className=" hidden sm:grid  grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              <div className="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
                 <StatCard icon={Bell} color="teal" title={`${announcementsCount}`} subtitle="Annonces Actives" />
                 <StatCard icon={MapPin} color="blue" title={`${organizationsCount}`} subtitle="Hôpitaux & Cliniques" />
-                <StatCard icon={Users} color="purple" title={`${(usersCount / 1000).toFixed(1)}K`} subtitle="Utilisateurs" />
+                
+                {/* ✅ CORRECTION ICI : On passe usersCount tel quel (String) car il est déjà formaté compact */}
+                <StatCard icon={Users} color="purple" title={usersCount} subtitle="Utilisateurs" />
               </div>
             </div>
           </div> 
 
-          {/* ==========================================
-              2. COLONNE DROITE : Illustration
-              ========================================== */}
+          {/* COLONNE DROITE : Illustration */}
           <div className="relative justify-center md:justify-end mt-8 md:mt-0 hidden md:flex">
             <motion.div
               initial={{ opacity: 0, x: 30 }}

@@ -8,6 +8,13 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+   // ✅ CORRECTION ICI : Configuration du sérialiseur de paramètres
+  // Cela évite d'ajouter des crochets "[]" aux tableaux dans l'URL.
+  // Axios enverra ?types=A&types=B au lieu de ?types[]=A&types[]=B
+  paramsSerializer: {
+    indexes: null, 
+  },
+  
 });
 
 // Intercepteur pour ajouter le token JWT à chaque requête

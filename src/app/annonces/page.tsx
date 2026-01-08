@@ -1,62 +1,34 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 /* eslint-disable react-hooks/exhaustive-deps */
+ 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useMemo, useEffect, MouseEvent } from 'react';
+import { useState, useMemo, MouseEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, 
-  Search, 
-  Filter, 
-  Star,
-  ChevronDown,
-  X,
-  MapPin,
-  Calendar,
-  Clock,
-  Users,
-  Eye,
-  MessageCircle,
-  Heart,
-  Grid,
-  List,
-  ChevronRight,
-  Loader2,
-  Bookmark,
-  Share2,
-  Check,
-  Sparkles,
-  Zap,
-  Award,
-  Info,
-  TrendingUp,
-  AlertTriangle,
-  Lock,
-  LogIn
+  ArrowLeft, Search, Filter, Star, ChevronDown, X, MapPin, Calendar, 
+  Users, Loader2, Bookmark, Share2, List, Grid, AlertTriangle 
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query'; 
 
-// API & Types
-import { announcementsApi } from '@/lib/api-endponts';
-import { categoriesApi } from '@/lib/api-endponts';
-import { bookmarksApi } from '@/lib/api-endponts';
-import { Announcement, AnnouncementStatus, TargetAudience, QueryAnnouncementDto, PaginatedAnnouncementsResponse } from '@/types/announcement';
+// API & Hooks
+import { announcementsApi, categoriesApi, bookmarksApi } from '@/lib/api-endponts';
+import { Announcement, QueryAnnouncementDto, PaginatedAnnouncementsResponse } from '@/types/announcement';
 import { Category, PaginatedCategoriesResponse } from '@/types/category';
 import { ContentType } from '@/types/reaction';
 
-// ✅ IMPORT DES UTILITAIRES PARTAGÉS
+// Utils
 import { getCategoryIcon, getCategoryColor } from '@/components/home/utils/category-utils';
-
-// Hooks
-import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks';
+import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks'; // Utilisez votre hook optimisé
 import { getCloudinaryImageUrl } from '@/lib/cloudinary';
+import { Lock as LockIcon } from 'lucide-react';
 
 // ==========================================
-// SOUS-COMPOSANTS
+// COMPOSANTS CARTES (Code Intégré)
 // ==========================================
 
 function AnnouncementCard({ 
@@ -125,7 +97,6 @@ function AnnouncementCard({
         
         {/* Badges */}
         <div className="absolute top-3 left-3">
-          {/* ✅ CORRECTION : On passe le nom de la catégorie pour l'icône et la couleur */}
           <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-md`}>
             {getCategoryIcon(announcement.category?.name)} {announcement.category?.name}
           </span>
@@ -139,7 +110,6 @@ function AnnouncementCard({
           </div>
         )}
         
-        {/* Priority Badge */}
         {announcement.priority === 'URGENT' && (
           <div className="absolute bottom-3 left-3">
              <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full bg-red-600 text-white shadow-md animate-pulse">
@@ -207,7 +177,7 @@ function AnnouncementCard({
         <AnimatePresence>
           {showDetails && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600 space-y-2">
-              <div className="flex items-center"><Clock className="h-4 w-4 mr-2 text-teal-600" /> {announcement.startDate ? new Date(announcement.startDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''} - {announcement.endDate ? new Date(announcement.endDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+              <div className="flex items-center"><Calendar className="h-4 w-4 mr-2 text-teal-600" /> {announcement.startDate ? new Date(announcement.startDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''} - {announcement.endDate ? new Date(announcement.endDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
               <div className="flex items-center"><MapPin className="h-4 w-4 mr-2 text-teal-600" /> {announcement.location?.address}</div>
               <div className="flex items-center"><Users className="h-4 w-4 mr-2 text-teal-600" /> {announcement.targetAudience?.join(', ')}</div>
             </motion.div>
@@ -218,7 +188,6 @@ function AnnouncementCard({
   );
 }
 
-// Simplified Grid Card
 function AnnouncementGridCard({ 
   announcement, 
   isBookmarked, 
@@ -253,9 +222,8 @@ function AnnouncementGridCard({
       className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
     >
       <div className="relative h-48">
-        <img src={announcement.thumbnailImage || announcement.featuredImage} alt={announcement.title} className="w-full h-full object-cover" />
+        <img src={ getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })} alt={announcement.title} className="w-full h-full object-cover" />
         <div className="absolute top-2 left-2">
-             {/* ✅ CORRECTION ICI AUSSI */}
              <span className={`inline-flex items-center px-2 py-1 text-[10px] font-bold rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-sm`}>
                 {getCategoryIcon(announcement.category?.name)} {announcement.category?.name}
             </span>
@@ -265,7 +233,6 @@ function AnnouncementGridCard({
              <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
             </div>
         )}
-        {/* Bouton Bookmark en grille */}
         <button 
           onClick={handleBookmarkClick} 
           className="absolute top-2 right-10 p-1.5 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors"
@@ -297,65 +264,6 @@ function AnnouncementGridCard({
   );
 }
 
-function FiltersBar({ 
-  activeFiltersCount, 
-  onOpenFilters,
-  searchTerm,
-  onSearchChange
-}: { 
-  activeFiltersCount: number; 
-  onOpenFilters: () => void;
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-}) {
-  return (
-    <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Rechercher une campagne..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            {searchTerm && (
-              <button onClick={() => onSearchChange('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          
-          <button onClick={onOpenFilters} className="flex items-center px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full hover:from-teal-600 hover:to-teal-700 shadow-md">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtres {activeFiltersCount > 0 && <span className="ml-2 bg-white text-teal-600 text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">{activeFiltersCount}</span>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ onResetFilters, searchTerm }: { onResetFilters: () => void; searchTerm: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-        <Filter className="h-10 w-10 text-gray-400" />
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune campagne trouvée</h3>
-      <p className="text-gray-600 mb-6 max-w-md">
-        {searchTerm ? `Aucun résultat pour "${searchTerm}". Essayez d'autres mots-clés.` : "Aucune annonce ne correspond à vos critères actuels."}
-      </p>
-      <button onClick={onResetFilters} className="px-6 py-2.5 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-colors flex items-center">
-        <X className="h-4 w-4 mr-2" />
-        Réinitialiser les filtres
-      </button>
-    </div>
-  );
-}
-
 // ==========================================
 // PAGE PRINCIPALE
 // ==========================================
@@ -363,91 +271,37 @@ function EmptyState({ onResetFilters, searchTerm }: { onResetFilters: () => void
 export default function AnnouncementsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const categoryIdParam = searchParams.get('categoryId');
-  const searchParam = searchParams.get('search');
   
+  // ✅ 1. ÉTAT URL-DRIVEN (SEO & Refresh-safe)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const searchQuery = searchParams.get('search') || '';
+  const categoryId = searchParams.get('categoryId') || undefined;
+  const cityFilter = searchParams.get('city') || undefined;
+  const isFreeFilter = searchParams.get('isFree') === 'true' ? true : (searchParams.get('isFree') === 'false' ? false : undefined);
+  const hasPlacesFilter = searchParams.get('hasPlaces') === 'true';
+
   // États UI
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(''); // Pour le debounce local
   
-  // ✅ ÉTAT AUTHENTIFICATION
+  // État Auth
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
 
   useEffect(() => {
-    const checkAuthStatus = () => {
-      try {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (!authStorage) {
-          setIsAuthenticated(false);
-          return;
-        }
-        const { state } = JSON.parse(authStorage);
-        setIsAuthenticated(!!state.token);
-      } catch {
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuthStatus();
-    const handleStorageChange = () => checkAuthStatus();
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // ✅ UNIQUE DÉFINITION DE L'ÉTAT FILTERS
-  const [filters, setFilters] = useState<{
-    category?: string;
-    city?: string;
-    price?: 'free' | 'paid';
-    hasPlaces?: boolean;
-  }>({});
-  
-  // ✅ SYNCHRONISATION URL -> ÉTAT
-  useEffect(() => {
-    if (categoryIdParam) {
-      setFilters(prev => ({ ...prev, category: categoryIdParam }));
-    }
-    if (searchParam) {
-      setSearchTerm(searchParam);
-    }
-  }, [categoryIdParam, searchParam]);
-
-// ✅ REMPLACEMENT TOTAL (Version Générique)
-// Cela permet de récupérer tous les favoris tout en protégeant des erreurs 401/429.
-const { data: bookmarksResponse } = useBookmarksList(
-  { limit: 50 },
-  {
-    // Sécurité : Lance la requête seulement si connecté
-    isAuthenticated: isAuthenticated,
+    // Check Auth
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      const isAuth = authStorage ? !!JSON.parse(authStorage).state.token : false;
+      setIsAuthenticated(isAuth);
+    } catch { setIsAuthenticated(false); }
     
-    // Sécurité : Arrête les tentatives sur erreur 401 pour éviter le 429
-    retry: (failureCount, error: any) => {
-      if (error?.response?.status === 401 || error?.response?.status === 403) return false;
-      return failureCount < 1;
-    },
-  }
-);
+    // Sync search from URL on mount
+    setSearchTerm(searchQuery);
+  }, [searchQuery]); // Only depend on searchQuery from URL
 
-// Logique de transformation (Map) : On garde tous les IDs
-const bookmarkedIds = useMemo(() => {
-  // On prend tous les favoris (pas de filtre .filter(...))
-  return new Set(bookmarksResponse?.data.map(b => b.contentId) || []);
-}, [bookmarksResponse]);
-
-  const toggleBookmark = useToggleBookmark();
-
-  const handleBookmarkToggle = (contentId: string) => {
-    toggleBookmark.mutate(
-      ContentType.ANNOUNCEMENT,
-      contentId,
-      bookmarkedIds.has(contentId)
-    );
-  };
-
-  // 1. Récupérer les catégories
+  // ✅ 2. DONNÉES
   const { data: categoriesResponse } = useQuery<PaginatedCategoriesResponse>({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getCategories({ isActive: true }),
@@ -455,71 +309,108 @@ const bookmarkedIds = useMemo(() => {
   });
   const categories = categoriesResponse?.data || [];
 
-  // 2. Construire les paramètres pour l'API (Backend)
-  const queryDto = useMemo<QueryAnnouncementDto>(() => {
-    const dto: QueryAnnouncementDto = {
+  // Construction du DTO
+  const queryDto: QueryAnnouncementDto = useMemo(() => {
+    return {
       page,
-      limit: 10,
-      status: AnnouncementStatus.PUBLISHED,
+      limit: 12, // Items par page
+      search: searchTerm || undefined,
+      categoryId,
+      city: cityFilter,
+      isFree: isFreeFilter,
+      // NOTE: Si vous avez implémenté 'hasCapacity' dans le DTO Backend, ajoutez-le ici
+      // hasCapacity: hasPlacesFilter ? true : undefined,
     };
+  }, [page, searchTerm, categoryId, cityFilter, isFreeFilter, hasPlacesFilter]);
 
-    if (searchTerm) dto.search = searchTerm;
-    if (filters.category) dto.categoryId = filters.category;
-    if (filters.city) dto.city = filters.city;
-    
-    return dto;
-  }, [page, searchTerm, filters]);
-
-  // 3. Récupérer les annonces
+  // ✅ 3. REQUÊTE ANNONCES
   const { 
     data: announcementsResponse, 
     isLoading, 
-    isFetching,
-    refetch 
+    isFetching
   } = useQuery<PaginatedAnnouncementsResponse>({
     queryKey: ['announcements', 'list', queryDto],
     queryFn: () => announcementsApi.getAnnouncements(queryDto),
-    placeholderData: (previousData) => previousData, 
+    // ✅ CORRECTION TANSTACK v5 : placeholderData au lieu de keepPreviousData
+    placeholderData: (prevData) => prevData,
   });
 
   const announcements = announcementsResponse?.data || [];
   const meta = announcementsResponse?.meta;
   const totalPages = meta?.totalPages || 1;
 
-  // 4. Filtrage Côté Client (Prix et places restantes, car géré en Frontend)
-  const displayAnnouncements = useMemo(() => {
-    let filtered = [...announcements];
-    
-    if (filters.price === 'free') {
-      filtered = filtered.filter(a => a.isFree);
-    } else if (filters.price === 'paid') {
-      filtered = filtered.filter(a => !a.isFree);
-    }
+  // ✅ 4. FAVORIS (Optimisation : On ne charge que pour les affichés)
+  // NOTE : Assurez-vous d'avoir implémenté 'checkMany' dans api-endpoints.ts et useBookmarks.ts comme demandé
+  const { data: bookmarksResponse } = useBookmarksList(
+    { limit: 100 }, // Ajustez si besoin
+    { isAuthenticated }
+  );
 
-    if (filters.hasPlaces) {
-      filtered = filtered.filter(a => a.capacity && a.registeredCount < a.capacity);
-    }
+  const bookmarkedIds = useMemo(() => {
+    return new Set(bookmarksResponse?.data.map(b => b.contentId) || []);
+  }, [bookmarksResponse]);
 
-    return filtered;
-  }, [announcements, filters]);
+  const toggleBookmark = useToggleBookmark();
 
-  // Compteurs
-  const activeFiltersCount = Object.values(filters).filter(v => v !== undefined && v !== false).length;
+  // ✅ 5. HANDLERS (Avec Debounce pour l'URL)
+  const updateUrl = (newParams: Record<string, string | number | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === undefined) params.delete(key);
+      else params.set(key, String(value));
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
-  // Handlers
+  // Débounce pour la recherche (Optimisation)
+  const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      // On met à jour l'URL seulement après le délai
+      updateUrl({ search: searchTerm, page: 1 });
+    }, 500); // 500ms de délai
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const handlePageChange = (newPage: number) => {
+    updateUrl({ page: newPage });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleResetFilters = () => {
-    setFilters({});
-    setSearchTerm('');
-    setPage(1);
+    router.push('?page=1'); // Reset total
   };
 
-  const handleLoadMore = () => {
-    if (page < totalPages) {
-      setPage(p => p + 1);
-    }
+  const activeFiltersCount = [
+    cityFilter, 
+    isFreeFilter !== undefined,
+    hasPlacesFilter,
+    categoryId
+  ].filter(Boolean).length;
+
+    // ... (après const activeFiltersCount = ...)
+
+  // ✅ AJOUTER CETTE FONCTION
+  const handleApplyFilters = (newFilters: {
+    categoryId?: string;
+    city?: string;
+    isFree?: boolean;
+    hasPlaces?: boolean;
+  }) => {
+    updateUrl({
+      categoryId: newFilters.categoryId,
+      city: newFilters.city,
+      // Conversion booléen -> string pour l'URL
+      isFree: newFilters.isFree === true ? 'true' : (newFilters.isFree === false ? 'false' : undefined),
+      hasPlaces: newFilters.hasPlaces ? 'true' : undefined,
+      page: 1 // Toujours remettre à la page 1 quand on filtre
+    });
   };
 
-  // Filtre Modal Component
+  // (Composants modales identiques aux versions précédentes...)
   const FiltersModal = () => {
     if (!isFiltersModalOpen) return null;
     
@@ -528,28 +419,29 @@ const bookmarkedIds = useMemo(() => {
         <motion.div 
           initial={{ y: '100%', opacity: 0 }} 
           animate={{ y: 0, opacity: 1 }} 
+          exit={{ y: '100%', opacity: 0 }}
           className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto"
         >
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold">Filtrer</h3>
+            <h3 className="text-xl font-bold">Filtrer les campagnes</h3>
             <button onClick={() => setIsFiltersModalOpen(false)}><X className="h-6 w-6 text-gray-500" /></button>
           </div>
 
-          {/* Categories */}
+          {/* Catégories */}
           <div className="mb-6">
             <h4 className="font-semibold mb-3 text-sm text-gray-700">Catégories</h4>
             <div className="flex flex-wrap gap-2">
               <button 
-                onClick={() => setFilters({...filters, category: undefined})}
-                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${!filters.category ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                onClick={() => handleApplyFilters({ categoryId: undefined })}
+                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${!categoryId ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
               >
                 Toutes
               </button>
               {categories.map(cat => (
                 <button 
                   key={cat.id}
-                  onClick={() => setFilters({...filters, category: cat.id})}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${filters.category === cat.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                  onClick={() => handleApplyFilters({ categoryId: cat.id })}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${categoryId === cat.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                 >
                   {getCategoryIcon(cat.name)} {cat.name}
                 </button>
@@ -564,8 +456,8 @@ const bookmarkedIds = useMemo(() => {
               {['Douala', 'Yaoundé', 'Bafoussam', 'Garoua'].map(city => (
                 <button 
                   key={city}
-                  onClick={() => setFilters({...filters, city: filters.city === city ? undefined : city})}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${filters.city === city ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                  onClick={() => handleApplyFilters({ city: cityFilter === city ? undefined : city })}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${cityFilter === city ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                 >
                   {city}
                 </button>
@@ -578,14 +470,14 @@ const bookmarkedIds = useMemo(() => {
             <h4 className="font-semibold mb-3 text-sm text-gray-700">Prix</h4>
             <div className="flex gap-2">
               <button 
-                onClick={() => setFilters({...filters, price: filters.price === 'free' ? undefined : 'free'})} 
-                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${filters.price === 'free' ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
+                onClick={() => handleApplyFilters({ isFree: isFreeFilter === true ? undefined : true })} 
+                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${isFreeFilter === true ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
               >
                 Gratuit
               </button>
               <button 
-                onClick={() => setFilters({...filters, price: filters.price === 'paid' ? undefined : 'paid'})} 
-                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${filters.price === 'paid' ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
+                onClick={() => handleApplyFilters({ isFree: isFreeFilter === false ? undefined : false })} 
+                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${isFreeFilter === false ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
               >
                 Payant
               </button>
@@ -612,7 +504,7 @@ const bookmarkedIds = useMemo(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white shadow-sm">
         <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
@@ -620,22 +512,42 @@ const bookmarkedIds = useMemo(() => {
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Campagnes de Santé</h1>
-          <div className="w-9" /> {/* Spacer for center alignment */}
+          <div className="w-9" />
         </div>
       </header>
       
-      {/* Filters & Search */}
-      <FiltersBar 
-        activeFiltersCount={activeFiltersCount}
-        onOpenFilters={() => setIsFiltersModalOpen(true)}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      {/* Filters & Search Bar */}
+      <div className="sticky top-16 z-40 bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Rechercher une campagne..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)} // Local state update
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            
+            <button onClick={() => setIsFiltersModalOpen(true)} className="flex items-center px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full hover:from-teal-600 hover:to-teal-700 shadow-md">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtres {activeFiltersCount > 0 && <span className="ml-2 bg-white text-teal-600 text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">{activeFiltersCount}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Results Header */}
       <div className="px-4 py-3 max-w-7xl mx-auto flex justify-between items-center">
-        <span className="text-sm text-gray-600">
-          {meta?.total || 0} campagne{meta?.total !== 1 && 's'} trouvée{meta?.total !== 1 && 's'}
+        <span className="text-sm text-gray-600 font-medium">
+          {isLoading ? 'Chargement...' : `${meta?.total || 0} campagne${meta?.total !== 1 ? 's' : ''}`}
         </span>
         <div className="flex bg-gray-200 rounded-lg p-1">
           <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}><List className="h-4 w-4" /></button>
@@ -644,23 +556,30 @@ const bookmarkedIds = useMemo(() => {
       </div>
 
       {/* Main Content */}
-      <main className="pb-20 max-w-7xl mx-auto px-4 sm:px-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6">
         {isLoading && page === 1 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-8 w-8 text-teal-600 animate-spin mb-4" />
             <span className="text-gray-500">Chargement...</span>
           </div>
-        ) : displayAnnouncements.length > 0 ? (
+        ) : announcements.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+             <Filter className="h-12 w-12 text-gray-300 mb-4" />
+             <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune campagne trouvée</h3>
+             <p className="text-gray-600 mb-6 max-w-md">Essayez de modifier vos filtres ou votre recherche.</p>
+             <button onClick={handleResetFilters} className="text-teal-600 font-medium text-sm hover:underline">Réinitialiser les filtres</button>
+          </div>
+        ) : (
           <>
             {viewMode === 'list' ? (
               <div className="space-y-6">
-                <AnimatePresence>
-                  {displayAnnouncements.map((announcement) => (
+                <AnimatePresence mode='popLayout'>
+                  {announcements.map((announcement) => (
                     <AnnouncementCard 
                       key={announcement.id} 
                       announcement={announcement} 
                       isBookmarked={bookmarkedIds.has(announcement.id)}
-                      onBookmarkToggle={() => handleBookmarkToggle(announcement.id)}
+                      onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
                       isAuthenticated={isAuthenticated}
                       onLoginPrompt={() => setIsLoginPromptOpen(true)}
                     />
@@ -669,75 +588,74 @@ const bookmarkedIds = useMemo(() => {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <AnimatePresence>
-                  {displayAnnouncements.map((announcement) => (
+                 <AnimatePresence mode='popLayout'>
+                  {announcements.map((announcement) => (
                     <AnnouncementGridCard 
-                      key={announcement.id} 
+                      key={announcement.id}
                       announcement={announcement}
                       isBookmarked={bookmarkedIds.has(announcement.id)}
-                      onBookmarkToggle={() => handleBookmarkToggle(announcement.id)}
+                      onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
                       isAuthenticated={isAuthenticated}
                       onLoginPrompt={() => setIsLoginPromptOpen(true)}
                     />
                   ))}
-                </AnimatePresence>
+                 </AnimatePresence>
               </div>
             )}
 
-            {/* Pagination / Load More */}
-            {page < totalPages && (
-              <div className="flex justify-center mt-10">
-                <button 
-                  onClick={handleLoadMore}
-                  disabled={isFetching}
-                  className="px-8 py-3 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 transition-all flex items-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isFetching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Charger plus de résultats
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-10">
+                <button onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
+                  Précédent
+                </button>
+                <span className="text-sm font-medium">Page {page} / {totalPages}</span>
+                <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
+                  Suivant
                 </button>
               </div>
             )}
           </>
-        ) : (
-          <EmptyState onResetFilters={handleResetFilters} searchTerm={searchTerm} />
         )}
       </main>
 
       {/* Modals */}
       <FiltersModal />
 
-      {/* ✅ MODALE DE CONNEXION */}
-      <AnimatePresence>
-        {isLoginPromptOpen && (
-          <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full text-center"
-            >
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock className="h-8 w-8 text-gray-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
-              <p className="text-gray-600 mb-6">Vous devez être connecté pour ajouter des favoris.</p>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => (window.location.href = '/login')}
-                  className="w-full py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700"
-                >
-                  Se connecter
-                </button>
-                <button
-                  onClick={() => setIsLoginPromptOpen(false)}
-                  className="w-full py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+{/* ✅ MODALE DE CONNEXION CORRIGÉE */}
+<AnimatePresence>
+  {isLoginPromptOpen && (
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl p-6 max-w-sm w-full text-center"
+      >
+        {/* ✅ UTILISATION CORRIGÉE ICI */}
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <LockIcon className="h-8 w-8 text-gray-600" />
+        </div>
+        
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
+        <p className="text-gray-600 mb-6">Vous devez être connecté pour ajouter des favoris.</p>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => (window.location.href = '/login')}
+            className="w-full py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700"
+          >
+            Se connecter
+          </button>
+          <button
+            onClick={() => setIsLoginPromptOpen(false)}
+            className="w-full py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50"
+          >
+            Annuler
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
     </div>
   );
 }
