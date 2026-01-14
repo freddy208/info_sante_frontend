@@ -149,8 +149,8 @@ export default function HeroSection() {
   }, [isDropdownOpen]);
 
   const getLink = (item: SearchResultItem) => {
-    if (item.type === 'ORGANIZATION') return `/organizations/${item.id}`;
-    if (item.type === 'ANNOUNCEMENT') return `/announcements/${item.slug || item.id}`;
+    if (item.type === 'ORGANIZATION') return `/hopitals/${item.id}`;
+    if (item.type === 'ANNOUNCEMENT') return `/annonces/${item.slug || item.id}`;
     if (item.type === 'ARTICLE') return `/articles/${item.slug || item.id}`;
     return '#';
   };

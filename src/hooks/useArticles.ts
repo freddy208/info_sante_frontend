@@ -17,17 +17,34 @@ import {
   QueryArticleFormData,
 } from '@/lib/validations/article';
 
+const normalizeArticleParams = (
+  params?: QueryArticleDto
+): QueryArticleDto => ({
+  page: params?.page ?? 1,
+  limit: params?.limit ?? 20,
+  categoryId: params?.categoryId || undefined,
+  organizationId: params?.organizationId || undefined,
+  search: params?.search || undefined,
+  status: params?.status ?? undefined,
+  featured: params?.featured ?? undefined,
+  tags: params?.tags?.length ? params.tags : undefined,
+});
+
+
 // ==========================================
 // HOOKS POUR LA LECTURE (Public)
 // ==========================================
 
-export const useArticlesList = (params?: QueryArticleFormData) => {
+export const useArticlesList = (params?: QueryArticleDto) => {
+  const normalizedParams = normalizeArticleParams(params);
+
   return useQuery<PaginatedArticlesResponse, Error>({
-    queryKey: ['articles', 'list', params],
-    queryFn: () => articlesApi.getArticles(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ['articles', 'list', normalizedParams],
+    queryFn: () => articlesApi.getArticles(normalizedParams),
+    staleTime: 1000 * 60 * 5,
   });
 };
+
 
 export const useArticle = (idOrSlug: string) => {
   return useQuery<Article, Error>({
@@ -42,13 +59,16 @@ export const useArticle = (idOrSlug: string) => {
 // HOOKS POUR L'ORGANISATION CONNECTÉE
 // ==========================================
 
-export const useMyArticlesList = (params?: QueryArticleFormData) => {
+export const useMyArticlesList = (params?: QueryArticleDto) => {
+  const normalizedParams = normalizeArticleParams(params);
+
   return useQuery<PaginatedArticlesResponse, Error>({
-    queryKey: ['articles', 'my', params],
-    queryFn: () => articlesApi.getMyArticles(params),
+    queryKey: ['articles', 'my', normalizedParams],
+    queryFn: () => articlesApi.getMyArticles(normalizedParams),
     staleTime: 1000 * 60 * 5,
   });
 };
+
 
 // ==========================================
 // HOOKS POUR LES MUTATIONS (CRUD)

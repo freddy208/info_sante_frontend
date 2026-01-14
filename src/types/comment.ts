@@ -32,6 +32,9 @@ export interface Comment {
   createdAt: Date;
   updatedAt: Date;
   
+  // ✅ AJOUT ICI : Le Backend calcule le total des réponses pour les parents
+  totalReplies?: number; 
+
   // Inclusions optionnelles
   user?: {
     id: string;

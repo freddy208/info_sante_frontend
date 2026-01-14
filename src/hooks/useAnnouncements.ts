@@ -17,6 +17,18 @@ import {
   QueryAnnouncementFormData
 } from '@/lib/validations/announcement';
 
+const normalizeAnnouncementParams = (
+  params?: QueryAnnouncementDto
+): QueryAnnouncementDto => ({
+  page: params?.page ?? 1,
+  limit: params?.limit ?? 20,
+  categoryId: params?.categoryId || undefined,
+  search: params?.search || undefined,
+  isFree: params?.isFree ?? undefined,
+  hasCapacity: params?.hasCapacity ?? undefined,
+});
+
+
 // ==========================================
 // HOOKS POUR LA LECTURE (Public)
 // ==========================================
@@ -24,12 +36,15 @@ import {
 // ✅ CORRECTION ICI : On utilise QueryAnnouncementDto (le type backend)
 // et non QueryAnnouncementFormData (le type Zod)
 export const useAnnouncementsList = (params?: QueryAnnouncementDto) => {
+  const normalizedParams = normalizeAnnouncementParams(params);
+
   return useQuery<PaginatedAnnouncementsResponse, Error>({
-    queryKey: ['announcements', 'list', params],
-    queryFn: () => announcementsApi.getAnnouncements(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ['announcements', 'list', normalizedParams],
+    queryFn: () => announcementsApi.getAnnouncements(normalizedParams),
+    staleTime: 1000 * 60 * 5,
   });
 };
+
 
 export const useAnnouncement = (idOrSlug: string) => {
   return useQuery<Announcement, Error>({
@@ -69,12 +84,15 @@ export const useRegisterAnnouncement = () => {
 
 // ✅ CORRECTION ICI : On utilise QueryAnnouncementDto aussi pour les requêtes privées
 export const useMyAnnouncementsList = (params?: QueryAnnouncementDto) => {
+  const normalizedParams = normalizeAnnouncementParams(params);
+
   return useQuery<PaginatedAnnouncementsResponse, Error>({
-    queryKey: ['announcements', 'my', params],
-    queryFn: () => announcementsApi.getMyAnnouncements(params),
-    staleTime: 1000 * 60 * 5, 
+    queryKey: ['announcements', 'my', normalizedParams],
+    queryFn: () => announcementsApi.getMyAnnouncements(normalizedParams),
+    staleTime: 1000 * 60 * 5,
   });
 };
+
 
 // ==========================================
 // HOOKS POUR LES MUTATIONS (CRUD)

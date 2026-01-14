@@ -83,10 +83,10 @@ export interface Announcement {
   registeredCount: number;
   requiresRegistration: boolean;
   viewsCount: number;
-  sharesCount: number;
-  commentsCount: number;
-  reactionsCount: number;
-  notificationsSent: number;
+  sharesCount?: number;
+  commentsCount?: number;
+  reactionsCount?: number;
+  notificationsSent?: number;
   isPinned: boolean;
   publishedAt?: string | null;
   status: AnnouncementStatus;

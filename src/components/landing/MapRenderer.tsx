@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+ 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -54,6 +55,15 @@ interface MapRendererProps {
 export default function MapRenderer({ organizations, userLocation, defaultCenter }: MapRendererProps) {
   const [isMounted, setIsMounted] = useState(false);
 
+  // Hook appelé **toujours**, même si on retourne un skeleton
+  const icons = useMemo(() => {
+    return organizations.map(org => ({
+      id: org.id,
+      icon: createCustomIcon(),
+      position: [org.latitude, org.longitude] as [number, number],
+    }));
+  }, [organizations]);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -69,7 +79,7 @@ export default function MapRenderer({ organizations, userLocation, defaultCenter
 
   const center: [number, number] = userLocation 
     ? [userLocation.lat, userLocation.lng] 
-    : defaultCenter; 
+    : defaultCenter;
 
   return (
     <MapContainer 
@@ -107,29 +117,31 @@ export default function MapRenderer({ organizations, userLocation, defaultCenter
           });
         }}
       >
-        {organizations.map((org) => (
-          <Marker 
-            key={org.id} 
-            position={[org.latitude, org.longitude]}
-            icon={createCustomIcon()}
+        {icons.map(({ id, icon, position }) => {
+  const org = organizations.find((o) => o.id === id);
+  if (!org) return null;
+
+  return (
+    <Marker key={id} position={position} icon={icon}>
+      <Popup>
+        <div className="font-sans text-sm p-2 min-w-[180px] flex flex-col gap-1">
+          <h3 className="font-bold text-gray-900">{org.name}</h3>
+          <p className="text-gray-500 text-xs">{org.type}</p>
+          {org.phone && <p className="text-gray-500 text-xs">📞 {org.phone}</p>}
+          {org.distance && <p className="text-gray-500 text-xs">📍 {org.distance.toFixed(2)} km</p>}
+
+          <button
+            onClick={() => window.location.href = `/hopitals/${org.id}`}
+            className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
           >
-            <Popup>
-              <div className="font-sans text-sm p-1 min-w-[150px]">
-                <h3 className="font-bold text-gray-900 mb-1">{org.name}</h3>
-                <p className="text-gray-600 text-xs">{org.type.replace('_', ' ')}</p>
-                {org.distance && (
-                  <div className="mt-2 p-1 bg-blue-50 rounded text-blue-700 text-xs font-semibold text-center">
-                    {org.distance.toFixed(1)} km
-                  </div>
-                )}
-                <p className="text-gray-600 text-xs mt-1">📞 {org.phone}</p>
-                <button className="mt-3 w-full bg-blue-600 text-white text-xs py-1.5 rounded shadow-sm hover:bg-blue-700 transition-colors">
-                  Itinéraire
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+            Voir détails
+          </button>
+        </div>
+      </Popup>
+    </Marker>
+  );
+})}
+
       </MarkerClusterGroup>
 
       {/* Marqueur Utilisateur (Hors du cluster pour rester visible) */}

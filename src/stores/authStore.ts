@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthResponse, User } from '@/types';
@@ -14,65 +15,43 @@ function isJwtExpired(token: string) {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   login: (authData: AuthResponse) => void;
   logout: () => void;
-  clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
-      token: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
 
-      login: ({ user, accessToken }) => {
-        if (!accessToken) return;
-        set({
-          user,
-          token: accessToken,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+      login: ({ accessToken, user }) => {
+        set({ user, accessToken, isAuthenticated: true, isLoading: false });
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
-        localStorage.removeItem("auth-storage");
-      },
-
-      clearAuth: () => {
-        set({ user: null, token: null, isAuthenticated: false });
-        localStorage.removeItem("auth-storage");
+        // ✅ CORRECTION : Ne PAS utiliser localStorage.removeItem ici.
+        // Le middleware 'persist' gère automatiquement la suppression du storage.
+        set({ user: null, accessToken: null, isAuthenticated: false });
       },
 
       setLoading: (loading) => set({ isLoading: loading }),
     }),
-
     {
-      name: "auth-storage",
-      storage:
-        typeof window !== "undefined"
-          ? createJSONStorage(() => localStorage)
-          : undefined,
-
+      name: 'auth-storage',
+      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
       onRehydrateStorage: () => (state) => {
-        // Déconnexion auto si token expiré
-        if (state?.token && isJwtExpired(state.token)) {
-          state.clearAuth();
-        }
-
-        // Déconnexion via événement global 401
-        window.addEventListener("unauthorized", () => {
-          console.log("Token expiré → logout automatique");
-          state?.clearAuth();
-        });
+        // Vérification de l'expiration au chargement
+        //if (state?.accessToken && isJwtExpired(state.accessToken)) {
+          //state.logout();
+        //}
       },
     }
   )

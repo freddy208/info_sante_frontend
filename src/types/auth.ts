@@ -172,7 +172,6 @@ export interface RefreshTokenDto {
 // ============================================
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: User;
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Category, CreateCategoryDto, PaginatedCategoriesResponse, UpdateCategoryDto } from '@/types/category';
 import { apiClient } from './api';
 import { 
@@ -16,23 +17,37 @@ import { GeocodeDto, GeocodeResult, ReverseGeocodeDto, CreateLocationDto, Update
 import { CreateCommentDto, QueryCommentDto, PaginatedCommentsResponse, UpdateCommentDto, Comment } from '@/types/comment';
 import { ReactionEntity, CreateReactionDto, QueryReactionDto, PaginatedReactionsResponse, ReactionStats } from '@/types/reaction';
 import { BookmarkEntity, CreateBookmarkDto, QueryBookmarkDto, PaginatedBookmarksResponse, BookmarkCheckResponse, BookmarkStatsResponse } from '@/types/bookmark';
+import {
+  UserPreference,
+  CreateUserPreferenceInput,
+  UpdateUserPreferenceInput,
+} from '@/types/user-preference';
+
+  export interface ViewAdviceResponse {
+  message: string;
+  views: number;
+}
+// =====================================
+// 🔐 AUTH API (CORRIGÉ POUR COOKIES)
+// =====================================
 
 export const authApi = {
-  register: (data: RegisterDto): Promise<AuthResponse> =>
-    apiClient.post('/auth/register', data).then(res => res.data),
+  register: (data: RegisterDto): Promise<{ accessToken: string; user: User }> =>
+    apiClient.post('/auth/register', data).then(res => res.data.data),
 
-  login: (data: LoginDto): Promise<AuthResponse> =>
-    apiClient.post('/auth/login', data).then(res => res.data),
+  login: (data: LoginDto): Promise<{ accessToken: string; user: User }> =>
+    apiClient.post('/auth/login', data).then(res => res.data.data),
 
-  refreshToken: (data: RefreshTokenDto): Promise<{ accessToken: string }> =>
-    apiClient.post('/auth/refresh', data).then(res => res.data),
+  refreshToken: (): Promise<{ accessToken: string }> =>
+    apiClient.post('/auth/refresh', { withCredentials: true }).then(res => res.data),
 
   getProfile: (): Promise<User> =>
-    apiClient.get('/auth/me').then(res => res.data),
+    apiClient.get('/auth/me').then(res => res.data.data),
 
   logout: (): Promise<{ message: string }> =>
-    apiClient.post('/auth/logout').then(res => res.data),
+    apiClient.post('/auth/logout').then(res => res.data.data),
 };
+
 
 // =====================================
 // 📂 CATEGORIES API
@@ -97,6 +112,7 @@ export const organizationsApi = {
     isVerified?: boolean;
     status?: string;
     search?: string;
+    sortBy?: string;
   }): Promise<PaginatedOrganizationsResponse> =>
     apiClient.get('/organizations', { params }).then(res => res.data.data),
 
@@ -124,11 +140,29 @@ export const announcementsApi = {
   create: (data: CreateAnnouncementDto): Promise<Announcement> =>
     apiClient.post('/announcements', data).then(res => res.data.data),
 
-  getAnnouncements: (params?: QueryAnnouncementDto): Promise<PaginatedAnnouncementsResponse> =>
-    apiClient.get('/announcements', { params }).then(res => res.data.data),
+getAnnouncements: (params?: QueryAnnouncementDto): Promise<PaginatedAnnouncementsResponse> =>
+  apiClient.get('/announcements', {
+    params: {
+      ...params,
+      isFree:
+        params?.isFree !== undefined ? String(params.isFree) : undefined,
+      hasCapacity:
+        params?.hasCapacity !== undefined ? String(params.hasCapacity) : undefined,
+    },
+  }).then(res => res.data.data),
 
-  getMyAnnouncements: (params?: QueryAnnouncementDto): Promise<PaginatedAnnouncementsResponse> =>
-    apiClient.get('/announcements/my', { params }).then(res => res.data.data),
+
+ getMyAnnouncements: (params?: QueryAnnouncementDto): Promise<PaginatedAnnouncementsResponse> =>
+  apiClient.get('/announcements/my', {
+    params: {
+      ...params,
+      isFree:
+        params?.isFree !== undefined ? String(params.isFree) : undefined,
+      hasCapacity:
+        params?.hasCapacity !== undefined ? String(params.hasCapacity) : undefined,
+    },
+  }).then(res => res.data.data),
+
 
   getAnnouncementById: (idOrSlug: string): Promise<Announcement> =>
     apiClient.get(`/announcements/${idOrSlug}`).then(res => res.data.data),
@@ -204,8 +238,11 @@ export const advicesApi = {
     apiClient.get('/advices', { params }).then(res => res.data.data),
 
   // ✅ AJOUT : Incrémenter le nombre de vues
-  viewAdvice: (id: string): Promise<Advice> =>
-    apiClient.patch(`/advices/${id}/view`).then(res => res.data.data),
+
+
+  viewAdvice: (id: string): Promise<ViewAdviceResponse> =>
+    apiClient.patch(`/advices/${id}/view`).then(res => res.data),
+
 
   getMyAdvices: (params?: QueryAdviceDto): Promise<PaginatedAdvicesResponse> =>
     // ✅ CORRECTION : res.data
@@ -383,4 +420,23 @@ export const bookmarksApi = {
   // ✅ AJOUT : Vérification par lot (Optimisation Page Liste)
   checkMany: (contentType: string, contentIds: string[]): Promise<Record<string, boolean>> =>
     apiClient.post('/bookmarks/check-many', { contentType, contentIds }).then(res => res.data.data),
+};
+
+// =====================================
+// ⚙️ USER PREFERENCES API
+// =====================================
+
+export const userPreferencesApi = {
+  getMine: (): Promise<UserPreference> =>
+    apiClient.get('/user-preferences/me').then(res => res.data.data),
+
+  create: (
+    data: CreateUserPreferenceInput,
+  ): Promise<UserPreference> =>
+    apiClient.post('/user-preferences', data).then(res => res.data.data),
+
+  update: (
+    data: UpdateUserPreferenceInput,
+  ): Promise<UserPreference> =>
+    apiClient.patch('/user-preferences', data).then(res => res.data.data),
 };

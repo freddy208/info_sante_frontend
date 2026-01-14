@@ -1,6 +1,4 @@
- 
 /* eslint-disable react-hooks/exhaustive-deps */
- 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
@@ -8,12 +6,16 @@
 import { useState, useMemo, MouseEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Search, Filter, Star, ChevronDown, X, MapPin, Calendar, 
-  Users, Loader2, Bookmark, Share2, List, Grid, AlertTriangle 
+  Search, Filter, Star, ChevronDown, X, MapPin, Calendar, 
+  Users, Loader2, Bookmark, Share2, List, Grid, AlertTriangle, Lock as LockIcon
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query'; 
+
+// ✅ AJOUT DES IMPORTS
+import Navbar from '@/components/shared/Navbar'; // Import du Navbar
+import { useAuthStore } from '@/stores/authStore'; // Import du Store CORRECT
 
 // API & Hooks
 import { announcementsApi, categoriesApi, bookmarksApi } from '@/lib/api-endponts';
@@ -23,9 +25,9 @@ import { ContentType } from '@/types/reaction';
 
 // Utils
 import { getCategoryIcon, getCategoryColor } from '@/components/home/utils/category-utils';
-import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks'; // Utilisez votre hook optimisé
+import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks';
 import { getCloudinaryImageUrl } from '@/lib/cloudinary';
-import { Lock as LockIcon } from 'lucide-react';
+
 
 // ==========================================
 // COMPOSANTS CARTES (Code Intégré)
@@ -88,14 +90,12 @@ function AnnouncementCard({
       className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
     >
       <div className="relative">
-        {/* Image */}
         <img
           src={ getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })}
           alt={announcement.title}
           className="w-full h-48 object-cover"
         />
         
-        {/* Badges */}
         <div className="absolute top-3 left-3">
           <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-md`}>
             {getCategoryIcon(announcement.category?.name)} {announcement.category?.name}
@@ -118,7 +118,6 @@ function AnnouncementCard({
           </div>
         )}
 
-        {/* Actions */}
         <div className="absolute bottom-3 right-3 flex space-x-2">
           <button 
             onClick={handleBookmarkClick} 
@@ -152,7 +151,6 @@ function AnnouncementCard({
           {announcement.organization?.name}
         </div>
         
-        {/* Capacity Bar */}
         {announcement.capacity && (
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -272,7 +270,12 @@ export default function AnnouncementsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // ✅ 1. ÉTAT URL-DRIVEN (SEO & Refresh-safe)
+  // ✅ 1. AUTHENTIFICATION CORRIGÉE
+  // On utilise directement le store au lieu de lire manuellement le localStorage.
+  // Le store utilise 'accessToken', ce qui corrige le bug du formulaire de connexion qui s'affichait.
+  const { isAuthenticated, user } = useAuthStore();
+
+  // ✅ 2. ÉTAT URL-DRIVEN (SEO & Refresh-safe)
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const searchQuery = searchParams.get('search') || '';
   const categoryId = searchParams.get('categoryId') || undefined;
@@ -284,24 +287,14 @@ export default function AnnouncementsPage() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // Pour le debounce local
-  
-  // État Auth
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
 
+  // Sync search from URL on mount
   useEffect(() => {
-    // Check Auth
-    try {
-      const authStorage = localStorage.getItem('auth-storage');
-      const isAuth = authStorage ? !!JSON.parse(authStorage).state.token : false;
-      setIsAuthenticated(isAuth);
-    } catch { setIsAuthenticated(false); }
-    
-    // Sync search from URL on mount
     setSearchTerm(searchQuery);
-  }, [searchQuery]); // Only depend on searchQuery from URL
+  }, [searchQuery]);
 
-  // ✅ 2. DONNÉES
+  // ✅ 3. DONNÉES
   const { data: categoriesResponse } = useQuery<PaginatedCategoriesResponse>({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getCategories({ isActive: true }),
@@ -313,17 +306,15 @@ export default function AnnouncementsPage() {
   const queryDto: QueryAnnouncementDto = useMemo(() => {
     return {
       page,
-      limit: 12, // Items par page
+      limit: 12,
       search: searchTerm || undefined,
       categoryId,
       city: cityFilter,
       isFree: isFreeFilter,
-      // NOTE: Si vous avez implémenté 'hasCapacity' dans le DTO Backend, ajoutez-le ici
-      // hasCapacity: hasPlacesFilter ? true : undefined,
     };
   }, [page, searchTerm, categoryId, cityFilter, isFreeFilter, hasPlacesFilter]);
 
-  // ✅ 3. REQUÊTE ANNONCES
+  // ✅ 4. REQUÊTE ANNONCES
   const { 
     data: announcementsResponse, 
     isLoading, 
@@ -331,7 +322,6 @@ export default function AnnouncementsPage() {
   } = useQuery<PaginatedAnnouncementsResponse>({
     queryKey: ['announcements', 'list', queryDto],
     queryFn: () => announcementsApi.getAnnouncements(queryDto),
-    // ✅ CORRECTION TANSTACK v5 : placeholderData au lieu de keepPreviousData
     placeholderData: (prevData) => prevData,
   });
 
@@ -339,10 +329,10 @@ export default function AnnouncementsPage() {
   const meta = announcementsResponse?.meta;
   const totalPages = meta?.totalPages || 1;
 
-  // ✅ 4. FAVORIS (Optimisation : On ne charge que pour les affichés)
-  // NOTE : Assurez-vous d'avoir implémenté 'checkMany' dans api-endpoints.ts et useBookmarks.ts comme demandé
+  // ✅ 5. FAVORIS
+  // Note: Assurez-vous que useBookmarksList utilise bien 'useAuthStore' en interne ou passe isAuthenticated
   const { data: bookmarksResponse } = useBookmarksList(
-    { limit: 100 }, // Ajustez si besoin
+    { limit: 100 },
     { isAuthenticated }
   );
 
@@ -352,7 +342,7 @@ export default function AnnouncementsPage() {
 
   const toggleBookmark = useToggleBookmark();
 
-  // ✅ 5. HANDLERS (Avec Debounce pour l'URL)
+  // ✅ 6. HANDLERS (Avec Debounce)
   const updateUrl = (newParams: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(newParams).forEach(([key, value]) => {
@@ -362,15 +352,13 @@ export default function AnnouncementsPage() {
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  // Débounce pour la recherche (Optimisation)
   const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
   
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTerm(searchTerm);
-      // On met à jour l'URL seulement après le délai
       updateUrl({ search: searchTerm, page: 1 });
-    }, 500); // 500ms de délai
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -381,7 +369,7 @@ export default function AnnouncementsPage() {
   };
 
   const handleResetFilters = () => {
-    router.push('?page=1'); // Reset total
+    router.push('?page=1');
   };
 
   const activeFiltersCount = [
@@ -391,9 +379,6 @@ export default function AnnouncementsPage() {
     categoryId
   ].filter(Boolean).length;
 
-    // ... (après const activeFiltersCount = ...)
-
-  // ✅ AJOUTER CETTE FONCTION
   const handleApplyFilters = (newFilters: {
     categoryId?: string;
     city?: string;
@@ -403,14 +388,12 @@ export default function AnnouncementsPage() {
     updateUrl({
       categoryId: newFilters.categoryId,
       city: newFilters.city,
-      // Conversion booléen -> string pour l'URL
       isFree: newFilters.isFree === true ? 'true' : (newFilters.isFree === false ? 'false' : undefined),
       hasPlaces: newFilters.hasPlaces ? 'true' : undefined,
-      page: 1 // Toujours remettre à la page 1 quand on filtre
+      page:1
     });
   };
 
-  // (Composants modales identiques aux versions précédentes...)
   const FiltersModal = () => {
     if (!isFiltersModalOpen) return null;
     
@@ -431,20 +414,9 @@ export default function AnnouncementsPage() {
           <div className="mb-6">
             <h4 className="font-semibold mb-3 text-sm text-gray-700">Catégories</h4>
             <div className="flex flex-wrap gap-2">
-              <button 
-                onClick={() => handleApplyFilters({ categoryId: undefined })}
-                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${!categoryId ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-              >
-                Toutes
-              </button>
+              <button onClick={() => handleApplyFilters({ categoryId: undefined })} className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${!categoryId ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>Toutes</button>
               {categories.map(cat => (
-                <button 
-                  key={cat.id}
-                  onClick={() => handleApplyFilters({ categoryId: cat.id })}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${categoryId === cat.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >
-                  {getCategoryIcon(cat.name)} {cat.name}
-                </button>
+                <button key={cat.id} onClick={() => handleApplyFilters({ categoryId: cat.id })} className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${categoryId === cat.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>{getCategoryIcon(cat.name)} {cat.name}</button>
               ))}
             </div>
           </div>
@@ -454,49 +426,14 @@ export default function AnnouncementsPage() {
             <h4 className="font-semibold mb-3 text-sm text-gray-700">Ville</h4>
             <div className="flex flex-wrap gap-2">
               {['Douala', 'Yaoundé', 'Bafoussam', 'Garoua'].map(city => (
-                <button 
-                  key={city}
-                  onClick={() => handleApplyFilters({ city: cityFilter === city ? undefined : city })}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${cityFilter === city ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >
-                  {city}
-                </button>
+                <button key={city} onClick={() => handleApplyFilters({ city: cityFilter === city ? undefined : city })} className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${cityFilter === city ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>{city}</button>
               ))}
             </div>
           </div>
 
-          {/* Prix */}
-          <div className="mb-6">
-            <h4 className="font-semibold mb-3 text-sm text-gray-700">Prix</h4>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => handleApplyFilters({ isFree: isFreeFilter === true ? undefined : true })} 
-                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${isFreeFilter === true ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
-              >
-                Gratuit
-              </button>
-              <button 
-                onClick={() => handleApplyFilters({ isFree: isFreeFilter === false ? undefined : false })} 
-                className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${isFreeFilter === false ? 'bg-teal-50 border-teal-600 text-teal-700' : 'bg-white text-gray-600'}`}
-              >
-                Payant
-              </button>
-            </div>
-          </div>
-
           <div className="flex gap-3 mt-8">
-            <button 
-              onClick={handleResetFilters} 
-              className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium transition-colors hover:bg-gray-50"
-            >
-              Effacer
-            </button>
-            <button 
-              onClick={() => setIsFiltersModalOpen(false)} 
-              className="flex-1 py-3 rounded-xl bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors"
-            >
-              Voir les résultats
-            </button>
+            <button onClick={handleResetFilters} className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium transition-colors hover:bg-gray-50">Effacer</button>
+            <button onClick={() => setIsFiltersModalOpen(false)} className="flex-1 py-3 rounded-xl bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors">Voir les résultats</button>
           </div>
         </motion.div>
       </div>
@@ -505,157 +442,150 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
-          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">Campagnes de Santé</h1>
-          <div className="w-9" />
-        </div>
-      </header>
+      {/* ✅ NAVBAR INTÉGRÉE */}
+      <Navbar />
       
-      {/* Filters & Search Bar */}
-      <div className="sticky top-16 z-40 bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher une campagne..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)} // Local state update
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+      {/* ✅ CONTAINER AVEC PADDING HAUT (Pour ne pas être caché sous le Navbar fixe) */}
+      <div className="pt-20 md:pt-24">
+        {/* Filters & Search Bar */}
+        <div className="sticky top-16 md:top-20 z-40 bg-white shadow-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher une campagne..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              
+              <button onClick={() => setIsFiltersModalOpen(true)} className="flex items-center px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full hover:from-teal-600 hover:to-teal-700 shadow-md">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtres {activeFiltersCount > 0 && <span className="ml-2 bg-white text-teal-600 text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">{activeFiltersCount}</span>}
+              </button>
             </div>
-            
-            <button onClick={() => setIsFiltersModalOpen(true)} className="flex items-center px-4 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-full hover:from-teal-600 hover:to-teal-700 shadow-md">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtres {activeFiltersCount > 0 && <span className="ml-2 bg-white text-teal-600 text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">{activeFiltersCount}</span>}
-            </button>
           </div>
         </div>
-      </div>
 
-      {/* Results Header */}
-      <div className="px-4 py-3 max-w-7xl mx-auto flex justify-between items-center">
-        <span className="text-sm text-gray-600 font-medium">
-          {isLoading ? 'Chargement...' : `${meta?.total || 0} campagne${meta?.total !== 1 ? 's' : ''}`}
-        </span>
-        <div className="flex bg-gray-200 rounded-lg p-1">
-          <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}><List className="h-4 w-4" /></button>
-          <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}><Grid className="h-4 w-4" /></button>
+        {/* Results Header */}
+        <div className="px-4 py-3 max-w-7xl mx-auto flex justify-between items-center">
+          <span className="text-sm text-gray-600 font-medium">
+            {isLoading ? 'Chargement...' : `${meta?.total || 0} campagne${meta?.total !== 1 ? 's' : ''}`}
+          </span>
+          <div className="flex bg-gray-200 rounded-lg p-1">
+            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}><List className="h-4 w-4" /></button>
+            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}><Grid className="h-4 w-4" /></button>
+          </div>
         </div>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6">
+          {(isLoading || isFetching) && page === 1 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 text-teal-600 animate-spin mb-4" />
+              <span className="text-gray-500">Mise à jour des résultats...</span>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+               <Filter className="h-12 w-12 text-gray-300 mb-4" />
+               <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune campagne trouvée</h3>
+               <p className="text-gray-600 mb-6 max-w-md">Essayez de modifier vos filtres ou votre recherche.</p>
+               <button onClick={handleResetFilters} className="text-teal-600 font-medium text-sm hover:underline">Réinitialiser les filtres</button>
+            </div>
+          ) : (
+            <>
+              {viewMode === 'list' ? (
+                <div className="space-y-6">
+                  <AnimatePresence mode='popLayout'>
+                    {announcements.map((announcement) => (
+                      <AnnouncementCard 
+                        key={announcement.id} 
+                        announcement={announcement} 
+                        isBookmarked={bookmarkedIds.has(announcement.id)}
+                        onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
+                        isAuthenticated={isAuthenticated}
+                        onLoginPrompt={() => setIsLoginPromptOpen(true)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                   <AnimatePresence mode='popLayout'>
+                    {announcements.map((announcement) => (
+                      <AnnouncementGridCard 
+                        key={announcement.id}
+                        announcement={announcement}
+                        isBookmarked={bookmarkedIds.has(announcement.id)}
+                        onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
+                        isAuthenticated={isAuthenticated}
+                        onLoginPrompt={() => setIsLoginPromptOpen(true)}
+                      />
+                    ))}
+                   </AnimatePresence>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-10">
+                  <button onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
+                    Précédent
+                  </button>
+                  <span className="text-sm font-medium">Page {page} / {totalPages}</span>
+                  <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
+                    Suivant
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </div>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6">
-        {isLoading && page === 1 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 text-teal-600 animate-spin mb-4" />
-            <span className="text-gray-500">Chargement...</span>
-          </div>
-        ) : announcements.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-             <Filter className="h-12 w-12 text-gray-300 mb-4" />
-             <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune campagne trouvée</h3>
-             <p className="text-gray-600 mb-6 max-w-md">Essayez de modifier vos filtres ou votre recherche.</p>
-             <button onClick={handleResetFilters} className="text-teal-600 font-medium text-sm hover:underline">Réinitialiser les filtres</button>
-          </div>
-        ) : (
-          <>
-            {viewMode === 'list' ? (
-              <div className="space-y-6">
-                <AnimatePresence mode='popLayout'>
-                  {announcements.map((announcement) => (
-                    <AnnouncementCard 
-                      key={announcement.id} 
-                      announcement={announcement} 
-                      isBookmarked={bookmarkedIds.has(announcement.id)}
-                      onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
-                      isAuthenticated={isAuthenticated}
-                      onLoginPrompt={() => setIsLoginPromptOpen(true)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 <AnimatePresence mode='popLayout'>
-                  {announcements.map((announcement) => (
-                    <AnnouncementGridCard 
-                      key={announcement.id}
-                      announcement={announcement}
-                      isBookmarked={bookmarkedIds.has(announcement.id)}
-                      onBookmarkToggle={() => toggleBookmark.mutate(ContentType.ANNOUNCEMENT, announcement.id, bookmarkedIds.has(announcement.id))}
-                      isAuthenticated={isAuthenticated}
-                      onLoginPrompt={() => setIsLoginPromptOpen(true)}
-                    />
-                  ))}
-                 </AnimatePresence>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-10">
-                <button onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
-                  Précédent
-                </button>
-                <span className="text-sm font-medium">Page {page} / {totalPages}</span>
-                <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isFetching} className="px-4 py-2 bg-white text-teal-600 font-medium rounded-full border border-teal-600 hover:bg-teal-50 disabled:opacity-50">
-                  Suivant
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </main>
 
       {/* Modals */}
       <FiltersModal />
 
-{/* ✅ MODALE DE CONNEXION CORRIGÉE */}
-<AnimatePresence>
-  {isLoginPromptOpen && (
-    <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl p-6 max-w-sm w-full text-center"
-      >
-        {/* ✅ UTILISATION CORRIGÉE ICI */}
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <LockIcon className="h-8 w-8 text-gray-600" />
-        </div>
-        
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
-        <p className="text-gray-600 mb-6">Vous devez être connecté pour ajouter des favoris.</p>
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={() => (window.location.href = '/login')}
-            className="w-full py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700"
-          >
-            Se connecter
-          </button>
-          <button
-            onClick={() => setIsLoginPromptOpen(false)}
-            className="w-full py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50"
-          >
-            Annuler
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  )}
-</AnimatePresence>
+      <AnimatePresence>
+        {isLoginPromptOpen && (
+            <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl p-6 max-w-sm w-full text-center"
+              >
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <LockIcon className="h-8 w-8 text-gray-600" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Connexion requise</h3>
+                <p className="text-gray-600 mb-6">Vous devez être connecté pour ajouter des favoris.</p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => (window.location.href = '/auth/connexion')}
+                    className="w-full py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700"
+                  >
+                    Se connecter
+                  </button>
+                  <button
+                    onClick={() => setIsLoginPromptOpen(false)}
+                    className="w-full py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+      </AnimatePresence>
     </div>
   );
 }

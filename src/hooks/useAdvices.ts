@@ -7,7 +7,8 @@ import {
   CreateAdviceDto, 
   UpdateAdviceDto, 
   QueryAdviceDto,
-  Priority
+  Priority,
+  PaginatedAdvicesResponse
 } from '@/types/advice';
 import { toast } from 'react-hot-toast';
 import { 
@@ -16,17 +17,37 @@ import {
   QueryAdviceFormData
 } from '@/lib/validations/advice'; // Assure-toi que ces types Zod matchent les DTOs ci-dessus
 
+const normalizeAdviceParams = (
+  params?: QueryAdviceDto
+): QueryAdviceDto => ({
+  page: params?.page ?? 1,
+  limit: params?.limit ?? 20,
+  categoryId: params?.categoryId || undefined,
+  organizationId: params?.organizationId || undefined,
+  search: params?.search || undefined,
+  status: params?.status ?? undefined,
+  priority: params?.priority ?? undefined,
+  isActive: params?.isActive ?? undefined,
+  targetAudience: params?.targetAudience?.length
+    ? params.targetAudience
+    : undefined,
+});
+
+
 // =====================================
 // HOOKS POUR LA LECTURE (public)
 // =====================================
 
 export const useAdvicesList = (params?: QueryAdviceDto) => {
-  return useQuery({
-    queryKey: ['advices', 'list', params],
-    queryFn: () => advicesApi.getAdvices(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+  const normalizedParams = normalizeAdviceParams(params);
+
+  return useQuery<PaginatedAdvicesResponse, Error>({
+    queryKey: ['advices', 'list', normalizedParams],
+    queryFn: () => advicesApi.getAdvices(normalizedParams),
+    staleTime: 1000 * 60 * 5,
   });
 };
+
 
 export const useAdvice = (id: string) => {
   return useQuery({
@@ -41,12 +62,15 @@ export const useAdvice = (id: string) => {
 // =====================================
 
 export const useMyAdvicesList = (params?: QueryAdviceDto) => {
-  return useQuery({
-    queryKey: ['advices', 'my', params],
-    queryFn: () => advicesApi.getMyAdvices(params),
+  const normalizedParams = normalizeAdviceParams(params);
+
+  return useQuery<PaginatedAdvicesResponse, Error>({
+    queryKey: ['advices', 'my', normalizedParams],
+    queryFn: () => advicesApi.getMyAdvices(normalizedParams),
     staleTime: 1000 * 60 * 5,
   });
 };
+
 
 export const useAdviceStats = () => {
   return useQuery({
@@ -147,5 +171,13 @@ export const useRemoveAdvice = () => {
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erreur lors de la suppression du conseil');
     },
+  });
+};
+// À ajouter dans useAdvices.ts
+export const useViewAdvice = () => {
+  return useMutation({
+    mutationFn: (id: string) => advicesApi.viewAdvice(id),
+    // Pas de toast ici pour ne pas déranger l'utilisateur lors d'une simple lecture
+    onError: (error: any) => console.error("Erreur vue:", error),
   });
 };
