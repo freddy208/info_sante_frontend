@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import HospitalDetailsContent from '@/components/hopitaux/HospitalDetailsContent';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>; // Modifier ici : ajouter Promise
 };
 
 // Fetch SEO

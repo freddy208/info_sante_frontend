@@ -5,10 +5,12 @@ import AdviceDetailPage from '@/components/conseils/AdviceDetailPage'; // Ton co
 
 // Fonction helper pour récupérer les données (simulée ici)
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>; // Changé en Promise
 }
 
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params; // Await ici
   return {
     title: "Détail du Conseil - Ma Plateforme Santé",
     description: "Lisez nos conseils médicaux validés par des experts.",
@@ -19,6 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function Page({ params }: PageProps) {
+export default async function Page({ params }: PageProps) {
+  const { id } = await params; // Await ici
   return <AdviceDetailPage />;
 }

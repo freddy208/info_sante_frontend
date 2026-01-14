@@ -8,12 +8,12 @@ import ArticleDetailPage from '@/components/articles/ArticleDetailPage'; // Ton 
 // Dans une vraie app, tu ferais ici un `fetch(articlesApi.getArticleById(id))` pour avoir les métadonnées avant le rendu.
 
 interface PageProps {
-  params: { idOrSlug: string };
+  params: Promise<{ idOrSlug: string }>; // Changé en Promise
 }
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   // Idéalement : fetch article data ici
   // const article = await fetchArticle(params.idOrSlug);
+  const { idOrSlug } = await params; // Await ici
   return {
     title: "Détail de l'article - Ma Plateforme Santé",
     description: "Lisez cet article complet...",
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function Page({ params }: PageProps) {
+export default async function Page({ params }: PageProps) {
+  const { idOrSlug } = await params; // Await ici
   return <ArticleDetailPage />;
 }
