@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useMemo, MouseEvent, useEffect } from 'react';
+import { useState, useMemo, MouseEvent, useEffect, Suspense } from 'react'; // ✅ AJOUT SUSPENSE
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Filter, Star, ChevronDown, X, MapPin, Calendar, 
@@ -263,16 +263,26 @@ function AnnouncementGridCard({
 }
 
 // ==========================================
-// PAGE PRINCIPALE
+// COMPOSANT LOADING
 // ==========================================
 
-export default function AnnouncementsPage() {
+function AnnouncementsLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
+      <Loader2 className="h-8 w-8 text-teal-600 animate-spin" />
+    </div>
+  );
+}
+
+// ==========================================
+// CONTENU PRINCIPAL
+// ==========================================
+
+function AnnouncementsContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // ✅ MAINTENANT À L'INTÉRIEUR DE SUSPENSE
   
   // ✅ 1. AUTHENTIFICATION CORRIGÉE
-  // On utilise directement le store au lieu de lire manuellement le localStorage.
-  // Le store utilise 'accessToken', ce qui corrige le bug du formulaire de connexion qui s'affichait.
   const { isAuthenticated, user } = useAuthStore();
 
   // ✅ 2. ÉTAT URL-DRIVEN (SEO & Refresh-safe)
@@ -330,7 +340,6 @@ export default function AnnouncementsPage() {
   const totalPages = meta?.totalPages || 1;
 
   // ✅ 5. FAVORIS
-  // Note: Assurez-vous que useBookmarksList utilise bien 'useAuthStore' en interne ou passe isAuthenticated
   const { data: bookmarksResponse } = useBookmarksList(
     { limit: 100 },
     { isAuthenticated }
@@ -587,5 +596,17 @@ export default function AnnouncementsPage() {
           )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ==========================================
+// WRAPPER AVEC SUSPENSE
+// ==========================================
+
+export default function AnnouncementsPage() {
+  return (
+    <Suspense fallback={<AnnouncementsLoading />}>
+      <AnnouncementsContent />
+    </Suspense>
   );
 }
