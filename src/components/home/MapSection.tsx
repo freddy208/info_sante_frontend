@@ -28,22 +28,23 @@ export default function MapSection() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  // Ligne 35 environ
+  const [activeFilters, setActiveFilters] = useState<OrganizationType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const defaultCenter: [number, number] = [3.848, 11.5021]; // Yaoundé
 
   // 2. LOGIQUE API & GPS
-  const loadNearbyHospitals = async (lat: number, lng: number, types?: string[]) => {
-    setLoading(true);
-    try {
-      const data = await publicApi.getNearbyOrganizations({
-        lat,
-        lng,
-        radius: 20,
-        types,
-        limit: 50,
-      });
+const loadNearbyHospitals = async (lat: number, lng: number, types?: OrganizationType[]) => {
+  setLoading(true);
+  try {
+    const data = await publicApi.getNearbyOrganizations({
+      lat,
+      lng,
+      radius: 20,
+      types, // Maintenant, types est OrganizationType[], ce qui matche l'API
+      limit: 50,
+    });
       setOrganizations(data || []);
     } catch (error) {
       console.error("Erreur API MapSection:", error);
@@ -76,26 +77,25 @@ export default function MapSection() {
   }, []);
 
   // 3. GESTION DES INTERACTIONS
-  const handleFilterClick = (typeId: string) => {
-    if (typeId === 'RESET') {
-      setActiveFilters([]);
-      const lat = userLocation?.lat || defaultCenter[0];
-      const lng = userLocation?.lng || defaultCenter[1];
-      loadNearbyHospitals(lat, lng, []);
-      return;
-    }
-
-    const newFilters = activeFilters.includes(typeId)
-      ? activeFilters.filter((t) => t !== typeId)
-      : [...activeFilters, typeId];
-
-    setActiveFilters(newFilters);
-    
+const handleFilterClick = (typeId: OrganizationType | 'RESET') => {
+  if (typeId === 'RESET') {
+    setActiveFilters([]);
     const lat = userLocation?.lat || defaultCenter[0];
     const lng = userLocation?.lng || defaultCenter[1];
-    loadNearbyHospitals(lat, lng, newFilters);
-  };
+    loadNearbyHospitals(lat, lng, []);
+    return;
+  }
 
+  const newFilters = activeFilters.includes(typeId as OrganizationType)
+    ? activeFilters.filter((t) => t !== typeId)
+    : [...activeFilters, typeId as OrganizationType];
+
+  setActiveFilters(newFilters);
+  
+  const lat = userLocation?.lat || defaultCenter[0];
+  const lng = userLocation?.lng || defaultCenter[1];
+  loadNearbyHospitals(lat, lng, newFilters);
+};
   // 4. FILTRAGE LOCAL
   const filteredOrganizations = useMemo(() => {
     if (!searchQuery) return organizations;
