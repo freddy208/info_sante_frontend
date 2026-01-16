@@ -2,83 +2,133 @@
 import { NearbyQueryDto, PublicAlert, PublicOrganization, PublicSearchResponse } from '@/types/public';
 import axios from 'axios';
 
-// Instance de base
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
-  headers: { 'Content-Type': 'application/json' },
-  paramsSerializer: { indexes: null },
+  //headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
 
-// ==========================
-// Intercepteur JWT (Requête)
-// ==========================
+// =====================================
+// 🛰️ INTERCEPTEUR DE REQUÊTE
+// =====================================
 apiClient.interceptors.request.use((config) => {
-  // Ne pas ajouter le token si on est déjà en train de refresh ou logout
-  if (config.url?.includes('/auth/refresh') || config.url?.includes('/auth/logout')) {
-    return config;
+  if (config.url?.includes('/refresh') || config.url?.includes('/logout')) return config;
+
+  const orgStorage = localStorage.getItem('organization-auth-storage');
+  const userStorage = localStorage.getItem('auth-storage');
+
+  let token = null;
+
+  // 1. On cherche d'abord l'organisation (clé 'token' dans ton store Zustand Org)
+  if (orgStorage) {
+    const parsedOrg = JSON.parse(orgStorage);
+    token = parsedOrg.state?.token; 
+  } 
+  
+  // 2. Sinon on cherche l'user classique (clé 'accessToken' dans ton store Zustand User)
+  if (!token && userStorage) {
+    const parsedUser = JSON.parse(userStorage);
+    token = parsedUser.state?.accessToken;
   }
 
-  const authStorage = localStorage.getItem('auth-storage');
-  if (authStorage) {
-    try {
-      const { state } = JSON.parse(authStorage);
-      if (state?.accessToken) {
-        config.headers.Authorization = `Bearer ${state.accessToken}`;
-      }
-    } catch { /* ignore */ }
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// ==========================
-// Interceptor Réponse (Refresh)
-// ==========================
+// =====================================
+// 🔄 LOGIQUE DE REFRESH TOKEN
+// =====================================
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
 apiClient.interceptors.response.use(
-  res => res,
+  (res) => res,
   async (error) => {
     const originalRequest = error.config;
 
-    // Si erreur 401 et qu'on n'a pas déjà tenté de retry
     if (error.response?.status === 401 && !originalRequest._retry) {
+      
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
+      // Déterminer si c'est une route "Organisation" (incluant les uploads)
+      const isOrgRequest = originalRequest.url?.includes('/organizations') || 
+                           originalRequest.url?.includes('/announcements') ||
+                           originalRequest.url?.includes('/uploads') ||
+                           originalRequest.url?.includes('/advices');
+      
+      const refreshUrl = isOrgRequest ? '/organizations/refresh' : '/auth/refresh';
+      const storageKey = isOrgRequest ? 'organization-auth-storage' : 'auth-storage';
 
       try {
-        // 1. Appel au refresh via AXIOS DIRECT (pour éviter les intercepteurs de l'apiClient)
+        const storage = localStorage.getItem(storageKey);
+        if (!storage) throw new Error('No storage found');
+        
+        const parsedStorage = JSON.parse(storage);
+        const refreshToken = parsedStorage.state?.refreshToken;
+
+        if (!refreshToken) throw new Error('No refresh token available');
+
         const response = await axios.post(
-          `${apiClient.defaults.baseURL}/auth/refresh`,
-          {},
-          { withCredentials: true }
+          `${apiClient.defaults.baseURL}${refreshUrl}`,
+          { refreshToken }
         );
 
-        // 2. Extraction du token selon ton TransformInterceptor NestJS
         const newAccessToken = response.data?.data?.accessToken || response.data?.accessToken;
+        const newRefreshToken = response.data?.data?.refreshToken || response.data?.refreshToken;
 
-        if (!newAccessToken) throw new Error('No token received');
-
-        // 3. Mise à jour globale et locale
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-        
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          const parsed = JSON.parse(authStorage);
-          if (parsed.state) {
-            parsed.state.accessToken = newAccessToken;
-            parsed.state.isAuthenticated = true;
-            localStorage.setItem('auth-storage', JSON.stringify(parsed));
+        // Mise à jour du stockage avec respect des clés respectives
+        if (parsedStorage.state) {
+          if (isOrgRequest) {
+            parsedStorage.state.token = newAccessToken; // Clé 'token' pour Org
+          } else {
+            parsedStorage.state.accessToken = newAccessToken; // Clé 'accessToken' pour User
           }
+          
+          if (newRefreshToken) parsedStorage.state.refreshToken = newRefreshToken;
+          localStorage.setItem(storageKey, JSON.stringify(parsedStorage));
         }
 
-        // 4. Relancer la requête initiale avec le nouveau token
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        processQueue(null, newAccessToken);
+        
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
 
       } catch (refreshError) {
-        // Si le refresh échoue (Cookie expiré), on déconnecte vraiment
+        processQueue(refreshError, null);
         console.error("Session expirée, redirection...");
-        localStorage.removeItem('auth-storage'); // Optionnel selon ton besoin
-        window.dispatchEvent(new Event('unauthorized'));
+        
+        // Nettoyage précis
+        localStorage.removeItem(storageKey);
+        
+        if (typeof window !== 'undefined') {
+          window.location.href = isOrgRequest ? '/auth/connexion' : '/hopitals/login';
+        }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
     return Promise.reject(error);

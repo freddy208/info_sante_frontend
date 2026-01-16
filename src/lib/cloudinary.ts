@@ -43,3 +43,24 @@ export const getCloudinaryThumbnailUrl = (publicId: string, size = 300): string 
     quality: 'auto:good',
   });
 };
+
+// ✅ Nouvelle fonction pour les annonces (compatible publicId ou URL)
+export const getAnnouncementImageUrl = (
+  image: string,
+  options?: {
+    width?: number;
+    height?: number;
+    crop?: string;
+    quality?: string;
+    format?: string;
+  }
+): string => {
+  if (!image) return ''; // fallback si pas d'image
+
+  // Si image commence par http → c'est déjà une URL complète, on peut l'utiliser telle quelle
+  if (image.startsWith('http')) return image;
+
+  // Sinon, c'est un publicId → on construit l'URL Cloudinary sans toucher à l'URL complète
+  return getCloudinaryImageUrl(image, options);
+};
+

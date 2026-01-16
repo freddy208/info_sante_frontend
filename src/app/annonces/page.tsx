@@ -26,7 +26,7 @@ import { ContentType } from '@/types/reaction';
 // Utils
 import { getCategoryIcon, getCategoryColor } from '@/components/home/utils/category-utils';
 import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks';
-import { getCloudinaryImageUrl } from '@/lib/cloudinary';
+import { getAnnouncementImageUrl, getCloudinaryImageUrl } from '@/lib/cloudinary';
 
 
 // ==========================================
@@ -91,7 +91,7 @@ function AnnouncementCard({
     >
       <div className="relative">
         <img
-          src={ getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })}
+          src={ getAnnouncementImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })}
           alt={announcement.title}
           className="w-full h-48 object-cover"
         />
@@ -220,7 +220,7 @@ function AnnouncementGridCard({
       className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
     >
       <div className="relative h-48">
-        <img src={ getCloudinaryImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })} alt={announcement.title} className="w-full h-full object-cover" />
+        <img src={ getAnnouncementImageUrl(announcement.featuredImage, { width: 400, height: 225, crop: 'fill' })} alt={announcement.title} className="w-full h-full object-cover" />
         <div className="absolute top-2 left-2">
              <span className={`inline-flex items-center px-2 py-1 text-[10px] font-bold rounded-full bg-linear-to-r ${getCategoryColor(announcement.category?.name || '')} text-white shadow-sm`}>
                 {getCategoryIcon(announcement.category?.name)} {announcement.category?.name}

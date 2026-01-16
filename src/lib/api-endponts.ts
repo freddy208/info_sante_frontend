@@ -278,14 +278,15 @@ export const advicesApi = {
 export const uploadsApi = {
   uploadImage: (file: File, data: UploadImageDto): Promise<Media> => {
     const formData = new FormData();
-    formData.append('file', file);
+   // 1. Les données d'abord
     formData.append('contentType', data.contentType);
     if (data.contentId) {
       formData.append('contentId', data.contentId);
     }
-    return apiClient.post('/uploads/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then(res => res.data);
+    console.log(file instanceof File); // Doit être true
+    // 2. Le fichier en dernier
+    formData.append('file', file);
+    return apiClient.post('/uploads/image', formData).then(res => res.data.data);
   },
 
   uploadDocument: (file: File, data: UploadDocumentDto): Promise<Media> => {
@@ -295,9 +296,7 @@ export const uploadsApi = {
     if (data.contentId) {
       formData.append('contentId', data.contentId);
     }
-    return apiClient.post('/uploads/document', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then(res => res.data);
+  return apiClient.post('/uploads/document', formData).then(res => res.data);
   },
 
   getMyUploads: (params?: {

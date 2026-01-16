@@ -46,6 +46,7 @@ export const useOrganizationAuthStore = create<OrganizationAuthState>()(
         });
       },
 
+// ... dans ton store Zustand
       logout: () => {
         set({ 
           organization: null, 
@@ -53,7 +54,13 @@ export const useOrganizationAuthStore = create<OrganizationAuthState>()(
           refreshToken: null, 
           isAuthenticated: false 
         });
+        // On nettoie manuellement pour être sûr
         localStorage.removeItem("organization-auth-storage");
+        
+        // Redirection immédiate vers l'accueil
+        if (typeof window !== "undefined") {
+          window.location.href = '/';
+        }
       },
 
       clearAuth: () => {
@@ -64,6 +71,11 @@ export const useOrganizationAuthStore = create<OrganizationAuthState>()(
           isAuthenticated: false 
         });
         localStorage.removeItem("organization-auth-storage");
+        
+        // Redirection vers l'accueil (utile en cas d'erreur 401/403)
+        if (typeof window !== "undefined") {
+          window.location.href = '/';
+        }
       },
 
       setLoading: (loading) => set({ isLoading: loading }),

@@ -45,15 +45,20 @@ export const useMyUploadsList = (params?: {
 
 export const useUploadImage = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: ({ file, data }: { file: File; data: UploadImageFormData }) =>
       uploadsApi.uploadImage(file, data),
-    onSuccess: () => {
+    
+    onSuccess: (data) => { // ✅ Récupérer les données
+      console.log('✅ Upload réussi, données:', data); // Pour debug
       toast.success('Image uploadée avec succès');
       queryClient.invalidateQueries({ queryKey: ['uploads'] });
+      // ✅ Les données sont automatiquement retournées par mutateAsync
     },
+    
     onError: (error: any) => {
+      console.error('❌ Erreur upload:', error);
       toast.error(error.response?.data?.message || 'Erreur lors de l\'upload de l\'image');
     },
   });

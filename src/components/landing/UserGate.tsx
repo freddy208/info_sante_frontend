@@ -75,7 +75,7 @@ export function UserGate() {
     icon: Building2,
     gradient: "from-purple-500 to-pink-600",
     textColor: "text-purple-600",
-    link: "/hopitals/dashboard",
+    link: "/hopitals/login",
     btnText: "Accès Pro",
     badge: "Professionnel",
     btnVariant: "outline",
