@@ -22,7 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 // API & Hooks
 import { useAnnouncement, useAnnouncementsList, useRegisterAnnouncement } from '@/hooks/useAnnouncements';
 import { useBookmarksCheck, useIsBookmarked, useToggleBookmark } from '@/hooks/useBookmarks'; 
-import { getCloudinaryImageUrl } from '@/lib/cloudinary';
+import { getAnnouncementImageUrl, getCloudinaryImageUrl } from '@/lib/cloudinary';
 
 // ✅ IMPORTS NAVBAR & FOOTER
 import Navbar from '@/components/shared/Navbar';
@@ -127,7 +127,7 @@ function HeroImageSection({
   return (
     <div className="relative w-full h-[60vh] min-h-80 sm:h-[70vh]">
       <img
-        src={getCloudinaryImageUrl(announcement.featuredImage, { width: 1920, height: 1080, crop: 'fill' })}
+        src={getAnnouncementImageUrl(announcement.featuredImage, { width: 1920, height: 1080, crop: 'fill' })}
         alt={announcement.title}
         className="w-full h-full object-cover"
         loading="eager"
@@ -213,7 +213,7 @@ function ContentSection({
         <section className="mb-8 pb-6 border-b border-gray-100">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="w-20 h-20 bg-gray-100 rounded-2xl overflow-hidden shrink-0 border border-gray-200">
-              <img src={getCloudinaryImageUrl(announcement.organization?.logo || '', { width: 200, height: 200 })} alt={announcement.organization?.name} className="w-full h-full object-cover" />
+              <img src={getCloudinaryImageUrl(announcement.organization?.logo || 'H', { width: 200, height: 200 })} alt={announcement.organization?.name} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -653,7 +653,7 @@ function SimilarAnnouncements({
            <div key={campaign.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group">
               <div className="h-40 relative">
                  <img 
-                   src={campaign.thumbnailImage || campaign.featuredImage} 
+                   src={getAnnouncementImageUrl(campaign.featuredImage,  { width: 400, height: 225, crop: 'fill' })} 
                    alt={campaign.title} 
                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                    loading="lazy" 
