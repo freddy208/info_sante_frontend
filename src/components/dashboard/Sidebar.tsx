@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useOrganizationAuthStore } from '@/stores/organizationAuthStore';
-import { Home, Megaphone, FileText, Lightbulb, Users, Settings, LogOut, X } from 'lucide-react';
+import { Home, Megaphone, FileText, Lightbulb, Users, Settings, LogOut, X, MessageCircle, BarChart2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -16,7 +17,8 @@ const MENU_ITEMS = [
   { id: 'announcements', label: 'Annonces', icon: Megaphone, href: '/hopitals/dashboard/annonces' },
   { id: 'articles', label: 'Articles', icon: FileText, href: '/hopitals/dashboard/articles' },
   { id: 'advice', label: 'Conseils', icon: Lightbulb, href: '/hopitals/dashboard/conseils' },
-  { id: 'members', label: 'Équipe', icon: Users, href: '/hopitals/dashboard/parametres' },
+  { id: 'comments', label: 'Commentaires', icon: MessageCircle, href: '/hopitals/dashboard/commentaires' },
+  { id: 'statistics', label: 'Statistiques', icon: BarChart2, href: '/hopitals/dashboard/statistiques' },
   { id: 'settings', label: 'Paramètres', icon: Settings, href: '/hopitals/dashboard/parametres' },
 ];
 

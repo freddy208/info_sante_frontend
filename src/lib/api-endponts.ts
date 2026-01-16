@@ -265,7 +265,7 @@ export const advicesApi = {
 
   getAdviceStats: (): Promise<AdviceStats> =>
     // ✅ CORRECTION : res.data
-    apiClient.get('/advices/stats').then(res => res.data),
+    apiClient.get('/advices/stats').then(res => res.data.data),
 
   removeAdvice: (id: string): Promise<{ message: string }> =>
     apiClient.delete(`/advices/${id}`).then(res => res.data.data),

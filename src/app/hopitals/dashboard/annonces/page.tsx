@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
@@ -77,7 +78,7 @@ export default function CampaignsManagementPage() {
           <p className="text-gray-500">Gérez vos campagnes et communications santé.</p>
         </div>
         <button 
-          onClick={() => router.push('/annonces/creation')}
+          onClick={() => router.push('/hopitals/dashboard/annonces/creation')}
           className="bg-teal-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center hover:bg-teal-700 transition-all shadow-sm"
         >
           <Plus className="h-5 w-5 mr-2" /> Nouvelle annonce
@@ -227,7 +228,7 @@ export default function CampaignsManagementPage() {
           <Megaphone className="h-16 w-16 text-gray-200 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-900">Aucune annonce trouvée</h3>
           <p className="text-gray-500 mt-2 max-w-sm mx-auto">Vous n&apos;avez pas encore publié d&apos;annonces ou aucun résultat ne correspond à votre recherche.</p>
-          <button onClick={() => router.push('/annonces/creation')} className="mt-8 bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 transition-all shadow-md">
+          <button onClick={() => router.push('/hopitals/dashboard/annonces/creation')} className="mt-8 bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 transition-all shadow-md">
             Créer ma première annonce
           </button>
         </motion.div>
