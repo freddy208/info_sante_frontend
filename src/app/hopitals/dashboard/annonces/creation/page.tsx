@@ -19,6 +19,28 @@ import { TargetAudience, UpdateAnnouncementDto } from '@/types/announcement';
 import { ContentType } from '@/types/upload';
 import { useCategoriesList } from '@/hooks/useCategories';
 
+
+// 1. On définit explicitement le type attendu par le schéma Zod
+type AllowedAudience = "CHILDREN" | "INFANTS" | "ADULTS" | "ELDERLY" | "PREGNANT_WOMEN" | "ALL";
+
+// 2. On cast la constante pour qu'elle corresponde exactement au type du schéma
+const VALID_BACKEND_AUDIENCES = [
+  TargetAudience.CHILDREN,
+  TargetAudience.INFANTS,
+  TargetAudience.ADULTS,
+  TargetAudience.ELDERLY,
+  TargetAudience.PREGNANT_WOMEN,
+  TargetAudience.ALL,
+] as AllowedAudience[];
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  [TargetAudience.CHILDREN]: "Enfants",
+  [TargetAudience.INFANTS]: "Nourrissons",
+  [TargetAudience.ADULTS]: "Adultes",
+  [TargetAudience.ELDERLY]: "Personnes âgées",
+  [TargetAudience.PREGNANT_WOMEN]: "Femmes enceintes",
+  [TargetAudience.ALL]: "Tout public",
+};
 // 1. Schéma Zod aligné avec ton Backend
 const announcementSchema = z.object({
   title: z.string().min(5).max(200),
@@ -34,7 +56,9 @@ const announcementSchema = z.object({
   categoryId: z.string().min(1, "Veuillez choisir une catégorie"),
   startDate: z.string().min(1),
   endDate: z.string().min(1),
-  targetAudience: z.array(z.nativeEnum(TargetAudience)).min(1),
+  targetAudience: z.array(
+    z.enum(['CHILDREN', 'INFANTS', 'ADULTS', 'ELDERLY', 'PREGNANT_WOMEN', 'ALL'])
+  ).min(1, "Veuillez choisir au moins un public cible"),
   isFree: z.boolean(),
   // ✅ On force la conversion en nombre et on gère le cas "0" proprement
   cost: z.coerce.number()
@@ -192,24 +216,39 @@ export default function AnnouncementFormPage() {
                     </FormField>
                   </div>
 
-                  <FormField label="Public Cible" error={form.formState.errors.targetAudience?.message}>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.values(TargetAudience).map((audience) => (
-                        <label key={audience} className={`flex items-center gap-2 px-4 py-2 border rounded-xl cursor-pointer transition ${form.watch('targetAudience')?.includes(audience) ? 'bg-teal-50 border-teal-500 text-teal-700' : 'hover:bg-gray-50'}`}>
-                          <input 
-                            type="checkbox" className="hidden"
-                            checked={form.watch('targetAudience')?.includes(audience)}
-                            onChange={(e) => {
-                              const prev = form.getValues('targetAudience') || [];
-                              const next = e.target.checked ? [...prev, audience] : prev.filter(a => a !== audience);
-                              form.setValue('targetAudience', next, { shouldValidate: true });
-                            }}
-                          />
-                          <span className="text-sm font-medium">{audience}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </FormField>
+<FormField label="Public Cible" error={form.formState.errors.targetAudience?.message}>
+  <div className="flex flex-wrap gap-2">
+    {/* ✅ On boucle uniquement sur les audiences acceptées par le backend */}
+    {VALID_BACKEND_AUDIENCES.map((audience) => {
+      const isSelected = form.watch('targetAudience')?.includes(audience);
+      
+      return (
+        <label 
+          key={audience} 
+          className={`flex items-center gap-2 px-4 py-2 border rounded-xl cursor-pointer transition 
+            ${isSelected ? 'bg-teal-50 border-teal-500 text-teal-700' : 'hover:bg-gray-50 text-gray-600'}`}
+        >
+          <input 
+            type="checkbox" 
+            className="hidden"
+            checked={isSelected}
+            onChange={(e) => {
+              const currentValues = form.getValues('targetAudience') || [];
+              const nextValues = e.target.checked 
+                ? [...currentValues, audience] 
+                : currentValues.filter(a => a !== audience);
+              
+              form.setValue('targetAudience', nextValues, { shouldValidate: true });
+            }}
+          />
+          <span className="text-sm font-medium">
+            {AUDIENCE_LABELS[audience] || audience}
+          </span>
+        </label>
+      );
+    })}
+  </div>
+</FormField>
 
                  <FormField label="Catégorie" error={form.formState.errors.categoryId?.message}>
     <div className="relative">

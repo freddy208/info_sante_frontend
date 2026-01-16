@@ -16,16 +16,13 @@ apiClient.interceptors.request.use((config) => {
 
   const orgStorage = localStorage.getItem('organization-auth-storage');
   const userStorage = localStorage.getItem('auth-storage');
-
   let token = null;
 
-  // 1. On cherche d'abord l'organisation (clé 'token' dans ton store Zustand Org)
   if (orgStorage) {
     const parsedOrg = JSON.parse(orgStorage);
     token = parsedOrg.state?.token; 
   } 
   
-  // 2. Sinon on cherche l'user classique (clé 'accessToken' dans ton store Zustand User)
   if (!token && userStorage) {
     const parsedUser = JSON.parse(userStorage);
     token = parsedUser.state?.accessToken;
@@ -56,82 +53,87 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      // Déterminer si c'est une route "Organisation" (incluant les uploads)
-      const isOrgRequest = originalRequest.url?.includes('/organizations') || 
-                           originalRequest.url?.includes('/announcements') ||
-                           originalRequest.url?.includes('/uploads') ||
-                           originalRequest.url?.includes('/advices');
-      
-      const refreshUrl = isOrgRequest ? '/organizations/refresh' : '/auth/refresh';
-      const storageKey = isOrgRequest ? 'organization-auth-storage' : 'auth-storage';
-
-      try {
-        const storage = localStorage.getItem(storageKey);
-        if (!storage) throw new Error('No storage found');
-        
-        const parsedStorage = JSON.parse(storage);
-        const refreshToken = parsedStorage.state?.refreshToken;
-
-        if (!refreshToken) throw new Error('No refresh token available');
-
-        const response = await axios.post(
-          `${apiClient.defaults.baseURL}${refreshUrl}`,
-          { refreshToken }
-        );
-
-        const newAccessToken = response.data?.data?.accessToken || response.data?.accessToken;
-        const newRefreshToken = response.data?.data?.refreshToken || response.data?.refreshToken;
-
-        // Mise à jour du stockage avec respect des clés respectives
-        if (parsedStorage.state) {
-          if (isOrgRequest) {
-            parsedStorage.state.token = newAccessToken; // Clé 'token' pour Org
-          } else {
-            parsedStorage.state.accessToken = newAccessToken; // Clé 'accessToken' pour User
-          }
-          
-          if (newRefreshToken) parsedStorage.state.refreshToken = newRefreshToken;
-          localStorage.setItem(storageKey, JSON.stringify(parsedStorage));
-        }
-
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-        processQueue(null, newAccessToken);
-        
-        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-        return apiClient(originalRequest);
-
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        console.error("Session expirée, redirection...");
-        
-        // Nettoyage précis
-        localStorage.removeItem(storageKey);
-        
-        if (typeof window !== 'undefined') {
-          window.location.href = isOrgRequest ? '/auth/connexion' : '/hopitals/login';
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+    // Ne rien faire si ce n'est pas une 401 ou si c'est une route publique
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    // 1. DÉTECTION DU CONTEXTE (Est-ce qu'on a une session existante ?)
+    const orgStorage = localStorage.getItem('organization-auth-storage');
+    const userStorage = localStorage.getItem('auth-storage');
+    
+    let isOrg = false;
+    let hasSession = false;
+    let storageKey = '';
+
+    if (orgStorage && JSON.parse(orgStorage).state?.token) {
+      isOrg = true;
+      hasSession = true;
+      storageKey = 'organization-auth-storage';
+    } else if (userStorage && JSON.parse(userStorage).state?.accessToken) {
+      hasSession = true;
+      storageKey = 'auth-storage';
+    }
+
+    // 🛑 NAVIGATION LIBRE : Si aucune session n'existe, on ne redirige pas !
+    if (!hasSession) {
+      return Promise.reject(error);
+    }
+
+    // 2. GESTION DU REFRESH
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then(token => {
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+        return apiClient(originalRequest);
+      }).catch(err => Promise.reject(err));
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    const refreshUrl = isOrg ? '/organizations/refresh' : '/auth/refresh';
+
+    try {
+      const storage = localStorage.getItem(storageKey);
+      const parsedStorage = JSON.parse(storage || '{}');
+      const refreshToken = parsedStorage.state?.refreshToken;
+
+      if (!refreshToken) throw new Error('No refresh token');
+
+      const response = await axios.post(`${apiClient.defaults.baseURL}${refreshUrl}`, { refreshToken });
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data?.data || response.data;
+
+      // Mise à jour du stockage
+      if (parsedStorage.state) {
+        if (isOrg) parsedStorage.state.token = newAccessToken;
+        else parsedStorage.state.accessToken = newAccessToken;
+        if (newRefreshToken) parsedStorage.state.refreshToken = newRefreshToken;
+        localStorage.setItem(storageKey, JSON.stringify(parsedStorage));
+      }
+
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+      processQueue(null, newAccessToken);
+      
+      originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+      return apiClient(originalRequest);
+
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      
+      // La session a vraiment expiré : Nettoyage et redirection appropriée
+      localStorage.removeItem(storageKey);
+      if (typeof window !== 'undefined') {
+        // Redirection logique : 
+        // - Si c'était une org -> login organisation (/hopitals/login)
+        // - Si c'était un user -> login citoyen (/auth/connexion)
+        window.location.href = isOrg ? '/hopitals/login' : '/auth/connexion';
+      }
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 
