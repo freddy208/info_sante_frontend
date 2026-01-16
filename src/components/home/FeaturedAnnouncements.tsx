@@ -26,7 +26,7 @@ import { Announcement, AnnouncementStatus, Priority } from '@/types/announcement
 import { ContentType } from '@/types/reaction';
 
 // Imports Utilitaires
-import { getCloudinaryImageUrl } from '@/lib/cloudinary';
+import { getAnnouncementImageUrl, getCloudinaryImageUrl } from '@/lib/cloudinary';
 import { getCategoryIcon } from '@/components/home/utils/category-utils';
 import { useBookmarksList, useToggleBookmark } from '@/hooks/useBookmarks';
 
@@ -142,7 +142,7 @@ export default function FeaturedAnnouncements() {
                       {/* 1. Image Container */}
                       <div className="relative h-40 sm:h-48 overflow-hidden shrink-0">
                         <img
-                          src={getCloudinaryImageUrl(imageSrc, { width: 400, height: 225, crop: 'fill' })}
+                          src={getAnnouncementImageUrl(imageSrc, { width: 400, height: 225, crop: 'fill' })}
                           alt={announcement.title}
                           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                         />
